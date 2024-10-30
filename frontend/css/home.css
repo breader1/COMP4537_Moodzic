@@ -1,0 +1,19 @@
+/* home.css */
+
+/* Center the main content vertically (optional) */
+body, html {
+    height: 100%;
+}
+
+.container {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Adjust the textarea height */
+#promptInput {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 150px; /* Set a minimum height */
+}
