@@ -23,6 +23,16 @@ document.addEventListener("DOMContentLoaded", function () {
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
           <a class="navbar-brand" href="home.html">Moodzic</a>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link" href="home.html">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="generator.html">Generator</a>
+              </li>
+            </ul>
+          </div>
           <div class="d-flex">
             <a class="nav-link text-white" href="#" id="logout-link">Logout</a>
           </div>
@@ -39,6 +49,9 @@ document.addEventListener("DOMContentLoaded", function () {
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               <li class="nav-item">
                 <a class="nav-link" href="home.html">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="generator.html">Generator</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="admin.html">Admin</a>
@@ -65,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
       localStorage.removeItem('token');
       localStorage.removeItem('role');
       localStorage.removeItem('number_of_requests'); // optional, if you're tracking requests
-      window.location.href = 'authentication.html';
+      window.location.href = 'index.html';
     });
   }
 });
