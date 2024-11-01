@@ -67,4 +67,4 @@ jobs:
         with:
           app-name: 'COMP4537MoodzicFrontend'
           slot-name: 'Production'
-          package: ./frontend
+          package: .
