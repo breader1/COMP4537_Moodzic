@@ -25,9 +25,9 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
-
+.db
 # MacOS
 .DS_Store
 
 # Windows
-Thumbs.db
+moodzic.db
