@@ -1,4 +1,4 @@
-name: Build and deploy Node.js app to Azure Web App - COMP4537MoodzicFrontend
+name: Build and deploy Node.js app to Azure Web App - COMP4537MoodzicBackend
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Navigate to frontend, npm install, build, and test
+      - name: Navigate to backend, npm install, build, and test
         run: |
           cd backend
           npm install
@@ -65,6 +65,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'COMP4537MoodzicFrontend'
+          app-name: 'COMP4537MoodzicBackend'
           slot-name: 'Production'
           package: .
