@@ -4,7 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const port = 8888;
+const port = process.env.PORT || 8888;
 
 const server = http.createServer((req, res) => {
   // Map the file extension to the MIME type
