@@ -1,0 +1,11 @@
+/* generator.css */
+
+.container {
+    margin-top: 1rem;
+}
+
+/* Adjust the textarea height */
+#promptInput {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 100px; /* Set a minimum height */
+}
