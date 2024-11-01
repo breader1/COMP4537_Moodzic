@@ -26,7 +26,7 @@ class Database {
         CREATE TABLE IF NOT EXISTS User (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL UNIQUE,
-            number_of_requests INTEGER DEFAULT 20,
+            number_of_requests INTEGER DEFAULT 0,
             password TEXT NOT NULL,
             salt TEXT NOT NULL,
             role INTEGER DEFAULT 0,
