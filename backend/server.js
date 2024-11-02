@@ -61,7 +61,7 @@ class Server {
   }
 
   // Handle OPTIONS request
-  handleOptions(res) {
+  handleOptions(req, res) {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
