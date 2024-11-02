@@ -11,6 +11,20 @@ const JWT_SECRET = process.env.JWT_SECRET;
 class Server {
   constructor() {
     this.server = http.createServer(this.handleRequest.bind(this));
+
+    // Define routing table
+    this.routes = {
+      OPTIONS: {
+        "*": this.handleOptions.bind(this),
+      },
+      POST: {
+        "/register": this.register.bind(this),
+        "/login": this.login.bind(this),
+      },
+      GET: {
+        "/getAllUsersData": this.getAllUsersData.bind(this),
+      },
+    };
   }
 
   // Start the server
@@ -20,17 +34,17 @@ class Server {
     });
   }
 
-  // Main request handler that directs requests to the correct method
+  // Main request handler
   async handleRequest(req, res) {
     // Set CORS headers for every request
     this.setCorsHeaders(res);
 
-    if (req.method === "OPTIONS") {
-      this.handleOptions(res);
-    } else if (req.method === "POST" && req.url === "/register") {
-      await this.register(req, res);
-    } else if (req.method === "POST" && req.url === "/login") {
-      await this.login(req, res);
+    const methodRoutes = this.routes[req.method];
+    const handler =
+      methodRoutes && (methodRoutes[req.url] || methodRoutes["*"]);
+
+    if (handler) {
+      await handler(req, res);
     } else {
       this.notFound(res);
     }
@@ -175,6 +189,32 @@ class Server {
           role: user.role,
         })
       );
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          message: "Error processing request",
+          error: error.message,
+        })
+      );
+    }
+  }
+
+  // Route: Get all users' data
+  async getAllUsersData(req, res) {
+    // Authenticate the request
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return;
+
+    try {
+      // Retrieve all users' data from the database
+      const users = await db.getAll(
+        "SELECT email, number_of_requests FROM User"
+      );
+
+      // Respond with the list of users
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(users));
     } catch (error) {
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(
