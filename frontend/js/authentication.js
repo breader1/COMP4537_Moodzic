@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (isValid) {
       // Send registration data to backend
-      fetch("http://localhost:3000/register", {
+      fetch(serverEndpoints.register, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (isValid) {
       // Send login data to backend
-      fetch("http://localhost:3000/login", {
+      fetch(serverEndpoints.login, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
