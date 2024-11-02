@@ -20,11 +20,21 @@ class Server {
       POST: {
         "/register": this.register.bind(this),
         "/login": this.login.bind(this),
+        "/requestPasswordReset": this.requestPasswordReset.bind(this),
+        "/resetPassword": this.resetPassword.bind(this),
       },
       GET: {
         "/getAllUsersData": this.getAllUsersData.bind(this),
       },
     };
+
+    this.transporter = nodemailer.createTransport({
+      service: "gmail", // or use 'smtp' with custom SMTP settings
+      auth: {
+        user: process.env.EMAIL_USER, // Your email address
+        pass: process.env.EMAIL_PASSWORD, // Your email password or app-specific password
+      },
+    });
   }
 
   // Start the server
@@ -111,6 +121,109 @@ class Server {
       res.writeHead(403, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ message: "Forbidden" }));
       return null;
+    }
+  }
+
+  // New endpoint to initiate password reset
+  async requestPasswordReset(req, res) {
+    try {
+      const { email } = await this.parseJSONBody(req);
+
+      // Find the user in the database
+      const user = await db.get("SELECT * FROM User WHERE email = ?", [email]);
+      if (!user) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "User not found" }));
+        return;
+      }
+
+      // Generate a reset code and set an expiry time (e.g., 1 hour from now)
+      const resetCode = crypto.randomBytes(20).toString("hex");
+      const resetCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Update the user record with the reset code and expiry
+      await db.run(
+        "UPDATE User SET reset_code = ?, reset_code_expiry = ? WHERE email = ?",
+        [resetCode, resetCodeExpiry, email]
+      );
+
+      // Send the reset code via email
+      await this.sendResetEmail(email, resetCode);
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Password reset code has been sent" }));
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          message: "Error processing request",
+          error: error.message,
+        })
+      );
+    }
+  }
+
+  // New method to send the reset email
+  async sendResetEmail(email, resetCode) {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Password Reset Request",
+      text: `You requested a password reset. Your reset code is: ${resetCode}`,
+      html: `<p>You requested a password reset.</p><p>Your reset code is: <b>${resetCode}</b></p>`,
+    };
+
+    await this.transporter.sendMail(mailOptions);
+
+    //-----THIS CONSOLE LOG CAN'T BE USED IN PRODUCTION CODE ensure it's commented out before you push-----
+    //console.log(`Reset code sent to ${email}`);
+  }
+
+  // New endpoint to complete the password reset
+  async resetPassword(req, res) {
+    try {
+      const { email, resetCode, newPassword } = await this.parseJSONBody(req);
+
+      // Find the user in the database
+      const user = await db.get("SELECT * FROM User WHERE email = ?", [email]);
+      if (!user || user.reset_code !== resetCode) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({ message: "Invalid reset code or user not found" })
+        );
+        return;
+      }
+
+      // Check if the reset code has expired
+      const now = new Date();
+      if (new Date(user.reset_code_expiry) < now) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "Reset code has expired" }));
+        return;
+      }
+
+      // Generate a new salt and hash the new password
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hashedPassword = this.hashPassword(newPassword, salt);
+
+      // Update the password and clear the reset code and expiry
+      await db.run(
+        "UPDATE User SET password = ?, salt = ?, reset_code = NULL, reset_code_expiry = NULL WHERE email = ?",
+        [hashedPassword, salt, email]
+      );
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({ message: "Password has been reset successfully" })
+      );
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          message: "Error processing request",
+          error: error.message,
+        })
+      );
     }
   }
 
