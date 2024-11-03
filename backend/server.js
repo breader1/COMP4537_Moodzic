@@ -4,6 +4,7 @@ const http = require("http");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const db = require("./database/database");
+const nodemailer = require("nodemailer");
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -25,6 +26,10 @@ class Server {
       },
       GET: {
         "/getAllUsersData": this.getAllUsersData.bind(this),
+        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this),
+      },
+      PATCH: {
+        "/incrementUserRequests": this.incrementUserRequests.bind(this),
       },
     };
 
@@ -76,7 +81,6 @@ class Server {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Content-Length": "0",
     });
     res.end();
   }
@@ -110,7 +114,10 @@ class Server {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
     if (!token) {
-      res.writeHead(401, { "Content-Type": "application/json" });
+      res.writeHead(401, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(JSON.stringify({ message: "Unauthorized" }));
       return null;
     }
@@ -118,9 +125,66 @@ class Server {
     try {
       return jwt.verify(token, JWT_SECRET);
     } catch (err) {
-      res.writeHead(403, { "Content-Type": "application/json" });
+      res.writeHead(403, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(JSON.stringify({ message: "Forbidden" }));
       return null;
+    }
+  }
+
+  
+  async incrementUserRequests(req, res) {
+    // Authenticate the user
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return;
+
+    try {
+      // Get the user's current number_of_requests from the database
+      const user = await db.get(
+        "SELECT number_of_requests FROM User WHERE user_id = ?",
+        [decoded.user_id]
+      );
+
+      if (!user) {
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(JSON.stringify({ message: "User not found" }));
+        return;
+      }
+
+      // Increment the user's number_of_requests by 1
+      const updatedRequests = user.number_of_requests + 1;
+      await db.run("UPDATE User SET number_of_requests = ? WHERE user_id = ?", [
+        updatedRequests,
+        decoded.user_id,
+      ]);
+
+      // Return the updated number_of_requests
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(
+        JSON.stringify({
+          message: "Number of Requests Updated Successfully",
+          number_of_requests: updatedRequests,
+        })
+      );
+    } catch (error) {
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(
+        JSON.stringify({
+          message: "Error processing request",
+          error: error.message,
+        })
+      );
     }
   }
 
@@ -132,7 +196,10 @@ class Server {
       // Find the user in the database
       const user = await db.get("SELECT * FROM User WHERE email = ?", [email]);
       if (!user) {
-        res.writeHead(404, { "Content-Type": "application/json" });
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(JSON.stringify({ message: "User not found" }));
         return;
       }
@@ -150,10 +217,16 @@ class Server {
       // Send the reset code via email
       await this.sendResetEmail(email, resetCode);
 
-      res.writeHead(200, { "Content-Type": "application/json" });
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(JSON.stringify({ message: "Password reset code has been sent" }));
     } catch (error) {
-      res.writeHead(500, { "Content-Type": "application/json" });
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(
         JSON.stringify({
           message: "Error processing request",
@@ -187,7 +260,10 @@ class Server {
       // Find the user in the database
       const user = await db.get("SELECT * FROM User WHERE email = ?", [email]);
       if (!user || user.reset_code !== resetCode) {
-        res.writeHead(400, { "Content-Type": "application/json" });
+        res.writeHead(400, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(
           JSON.stringify({ message: "Invalid reset code or user not found" })
         );
@@ -197,7 +273,10 @@ class Server {
       // Check if the reset code has expired
       const now = new Date();
       if (new Date(user.reset_code_expiry) < now) {
-        res.writeHead(400, { "Content-Type": "application/json" });
+        res.writeHead(400, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(JSON.stringify({ message: "Reset code has expired" }));
         return;
       }
@@ -212,12 +291,18 @@ class Server {
         [hashedPassword, salt, email]
       );
 
-      res.writeHead(200, { "Content-Type": "application/json" });
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(
         JSON.stringify({ message: "Password has been reset successfully" })
       );
     } catch (error) {
-      res.writeHead(500, { "Content-Type": "application/json" });
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(
         JSON.stringify({
           message: "Error processing request",
@@ -237,7 +322,10 @@ class Server {
         email,
       ]);
       if (existingUser) {
-        res.writeHead(400, { "Content-Type": "application/json" });
+        res.writeHead(400, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(JSON.stringify({ message: "User already exists" }));
         return;
       }
@@ -251,10 +339,16 @@ class Server {
         "INSERT INTO User (email, password, salt, role) VALUES (?, ?, ?, ?)",
         [email, hashedPassword, salt, 0] // be default, all users are regular users
       );
-      res.writeHead(201, { "Content-Type": "application/json" });
+      res.writeHead(201, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(JSON.stringify({ message: "User registered successfully" }));
     } catch (error) {
-      res.writeHead(500, { "Content-Type": "application/json" });
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(
         JSON.stringify({
           message: "Error processing request",
@@ -273,7 +367,10 @@ class Server {
       const user = await db.get("SELECT * FROM User WHERE email = ?", [email]);
 
       if (!user) {
-        res.writeHead(400, { "Content-Type": "application/json" });
+        res.writeHead(400, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(JSON.stringify({ message: "User not found" }));
         return;
       }
@@ -281,7 +378,10 @@ class Server {
       // Hash the input password with the stored salt and compare
       const hashedPassword = this.hashPassword(password, user.salt);
       if (hashedPassword !== user.password) {
-        res.writeHead(401, { "Content-Type": "application/json" });
+        res.writeHead(401, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(JSON.stringify({ message: "Invalid credentials" }));
         return;
       }
@@ -293,17 +393,23 @@ class Server {
         { expiresIn: "1h" }
       );
 
-      // Respond with token, num_requests, and role
-      res.writeHead(200, { "Content-Type": "application/json" });
+      // Respond with token, email, and role
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(
         JSON.stringify({
           token,
-          number_of_requests: user.number_of_requests,
+          email: user.email,
           role: user.role,
         })
       );
     } catch (error) {
-      res.writeHead(500, { "Content-Type": "application/json" });
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(
         JSON.stringify({
           message: "Error processing request",
@@ -326,10 +432,77 @@ class Server {
       );
 
       // Respond with the list of users
-      res.writeHead(200, { "Content-Type": "application/json" });
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(JSON.stringify(users));
     } catch (error) {
-      res.writeHead(500, { "Content-Type": "application/json" });
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(
+        JSON.stringify({
+          message: "Error processing request",
+          error: error.message,
+        })
+      );
+    }
+  }
+
+  // New endpoint to get user's number of requests
+  async getUserNumberOfRequests(req, res) {
+    // Authenticate the user
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return;
+
+    try {
+      // Get the user's number of requests from the database
+      const user = await db.get(
+        "SELECT number_of_requests FROM User WHERE user_id = ?",
+        [decoded.user_id]
+      );
+
+      if (!user) {
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(JSON.stringify({ message: "User not found" }));
+        return;
+      }
+
+      // Check if number_of_requests is 20 or more
+      if (user.number_of_requests >= 20) {
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(
+          JSON.stringify({
+            message:
+              "All free tokens have been used up. Your requests will still be processed.",
+            number_of_requests: user.number_of_requests,
+          })
+        );
+      } else {
+        // Return the user's number_of_requests
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(
+          JSON.stringify({
+            number_of_requests: user.number_of_requests,
+          })
+        );
+      }
+    } catch (error) {
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
       res.end(
         JSON.stringify({
           message: "Error processing request",
@@ -341,7 +514,10 @@ class Server {
 
   // Helper function to handle 404 Not Found
   notFound(res) {
-    res.writeHead(404, { "Content-Type": "application/json" });
+    res.writeHead(404, {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    });
     res.end(JSON.stringify({ message: "Route not found" }));
   }
 }

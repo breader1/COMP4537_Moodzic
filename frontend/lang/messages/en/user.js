@@ -11,3 +11,7 @@ const serverEndpoints = {
     login: 'http://localhost:3000/login',
     getAllUsersData: 'http://localhost:3000/getAllUsersData',
 }
+
+const llmEndpoint = {
+    llm: 'https://fresh-insect-severely.ngrok-free.app/generate-audio'
+}
