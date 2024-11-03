@@ -1,3 +1,9 @@
+//This is the API gateway for Moodzic. 
+//It is responsible for handling all the requests from the frontend and interacting with the database.
+//It also sends emails to users for password reset requests.
+
+//-----ChatGPT was used to help with some of the code in this file.-----
+
 "use strict";
 require("dotenv").config();
 const http = require("http");
@@ -13,7 +19,7 @@ class Server {
   constructor() {
     this.server = http.createServer(this.handleRequest.bind(this));
 
-    // Define routing table
+    //routing table
     this.routes = {
       OPTIONS: {
         "*": this.handleOptions.bind(this),
@@ -33,11 +39,12 @@ class Server {
       },
     };
 
+    //for nodemailer
     this.transporter = nodemailer.createTransport({
-      service: "gmail", 
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASSWORD, 
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
   }
@@ -45,12 +52,13 @@ class Server {
   // Start the server
   start() {
     this.server.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Server running on ${PORT}`);
     });
   }
 
   // Main request handler
   async handleRequest(req, res) {
+
     // Set CORS headers for every request
     this.setCorsHeaders(res);
 
@@ -140,7 +148,6 @@ class Server {
     }
   }
 
-  
   async incrementUserRequests(req, res) {
     // Authenticate the user
     const decoded = this.authenticateToken(req, res);
@@ -250,7 +257,7 @@ class Server {
     }
   }
 
-  // New method to send the reset email
+  // method to send the reset email
   async sendResetEmail(email, resetCode) {
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -261,12 +268,9 @@ class Server {
     };
 
     await this.transporter.sendMail(mailOptions);
-
-    //-----THIS CONSOLE LOG CAN'T BE USED IN PRODUCTION CODE ensure it's commented out before you push-----
-    //console.log(`Reset code sent to ${email}`);
   }
 
-  // New endpoint to complete the password reset
+  //endpoint to complete the password reset
   async resetPassword(req, res) {
     try {
       const { email, resetCode, newPassword } = await this.parseJSONBody(req);

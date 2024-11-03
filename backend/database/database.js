@@ -1,3 +1,9 @@
+//This is the database class that is responsible for creating the database and the tables.
+//It also seeds the User table with sample data.
+
+//To avoid SQL injection attacks, we use prepared statements to execute SQL queries.
+
+//-----ChatGPT was used to help with some of the code in this file.-----
 "use strict";
 
 const sqlite3 = require("sqlite3").verbose();
@@ -20,7 +26,6 @@ class Database {
     this.seedUserTable();
   }
 
-  // Create User table
   createUserTable() {
     const sql = `
         CREATE TABLE IF NOT EXISTS User (
@@ -30,8 +35,8 @@ class Database {
             password TEXT NOT NULL,
             salt TEXT NOT NULL,
             role INTEGER DEFAULT 0,
-            reset_code TEXT,                      -- Field for password reset code
-            reset_code_expiry DATETIME,           -- New field for reset code expiry
+            reset_code TEXT,                      
+            reset_code_expiry DATETIME,           
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             last_login DATETIME,
@@ -41,7 +46,6 @@ class Database {
     this.run(sql);
   }
 
-  // Create Service table
   createServiceTable() {
     const sql = `
             CREATE TABLE IF NOT EXISTS Service (
@@ -58,7 +62,6 @@ class Database {
     this.run(sql);
   }
 
-  // Method to seed the User table with sample data
   seedUserTable() {
     const users = [
       { email: "john@john.com", password: "123", role: 0 },
@@ -107,7 +110,7 @@ class Database {
     return hash.digest("hex");
   }
 
-  // Run an SQL command
+  // Run an SQL command - params is an array of values to bind to the query for prepared statements
   run(sql, params = []) {
     return new Promise((resolve, reject) => {
       this.db.run(sql, params, function (err) {
