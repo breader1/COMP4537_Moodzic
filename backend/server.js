@@ -1,3 +1,9 @@
+//This is the API gateway for Moodzic. 
+//It is responsible for handling all the requests from the frontend and interacting with the database.
+//It also sends emails to users for password reset requests.
+
+//-----ChatGPT was used to help with some of the code in this file.-----
+
 "use strict";
 require("dotenv").config();
 const http = require("http");
@@ -13,7 +19,7 @@ class Server {
   constructor() {
     this.server = http.createServer(this.handleRequest.bind(this));
 
-    // Define routing table
+    //routing table
     this.routes = {
       OPTIONS: {
         "*": this.handleOptions.bind(this),
@@ -33,11 +39,12 @@ class Server {
       },
     };
 
+    //for nodemailer
     this.transporter = nodemailer.createTransport({
-      service: "gmail", // or use 'smtp' with custom SMTP settings
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, // Your email address
-        pass: process.env.EMAIL_PASSWORD, // Your email password or app-specific password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
   }
@@ -45,12 +52,13 @@ class Server {
   // Start the server
   start() {
     this.server.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Server running on ${PORT}`);
     });
   }
 
   // Main request handler
   async handleRequest(req, res) {
+
     // Set CORS headers for every request
     this.setCorsHeaders(res);
 
@@ -67,7 +75,10 @@ class Server {
 
   // Set CORS headers
   setCorsHeaders(res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/"
+    );
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PATCH");
     res.setHeader(
       "Access-Control-Allow-Headers",
@@ -78,7 +89,8 @@ class Server {
   // Handle OPTIONS request
   handleOptions(req, res) {
     res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin":
+        "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PATCH",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     });
@@ -116,7 +128,8 @@ class Server {
     if (!token) {
       res.writeHead(401, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(JSON.stringify({ message: "Unauthorized" }));
       return null;
@@ -127,14 +140,14 @@ class Server {
     } catch (err) {
       res.writeHead(403, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(JSON.stringify({ message: "Forbidden" }));
       return null;
     }
   }
 
-  
   async incrementUserRequests(req, res) {
     // Authenticate the user
     const decoded = this.authenticateToken(req, res);
@@ -150,7 +163,8 @@ class Server {
       if (!user) {
         res.writeHead(404, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(JSON.stringify({ message: "User not found" }));
         return;
@@ -166,7 +180,8 @@ class Server {
       // Return the updated number_of_requests
       res.writeHead(200, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -177,7 +192,8 @@ class Server {
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -198,7 +214,8 @@ class Server {
       if (!user) {
         res.writeHead(404, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(JSON.stringify({ message: "User not found" }));
         return;
@@ -221,13 +238,15 @@ class Server {
 
       res.writeHead(200, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(JSON.stringify({ message: "Password reset code has been sent" }));
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -238,7 +257,7 @@ class Server {
     }
   }
 
-  // New method to send the reset email
+  // method to send the reset email
   async sendResetEmail(email, resetCode) {
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -249,12 +268,9 @@ class Server {
     };
 
     await this.transporter.sendMail(mailOptions);
-
-    //-----THIS CONSOLE LOG CAN'T BE USED IN PRODUCTION CODE ensure it's commented out before you push-----
-    //console.log(`Reset code sent to ${email}`);
   }
 
-  // New endpoint to complete the password reset
+  //endpoint to complete the password reset
   async resetPassword(req, res) {
     try {
       const { email, resetCode, newPassword } = await this.parseJSONBody(req);
@@ -264,7 +280,8 @@ class Server {
       if (!user || user.reset_code !== resetCode) {
         res.writeHead(400, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(
           JSON.stringify({ message: "Invalid reset code or user not found" })
@@ -277,7 +294,8 @@ class Server {
       if (new Date(user.reset_code_expiry) < now) {
         res.writeHead(400, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(JSON.stringify({ message: "Reset code has expired" }));
         return;
@@ -295,7 +313,8 @@ class Server {
 
       res.writeHead(200, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({ message: "Password has been reset successfully" })
@@ -303,7 +322,8 @@ class Server {
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -326,7 +346,8 @@ class Server {
       if (existingUser) {
         res.writeHead(400, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(JSON.stringify({ message: "User already exists" }));
         return;
@@ -343,13 +364,15 @@ class Server {
       );
       res.writeHead(201, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(JSON.stringify({ message: "User registered successfully" }));
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -371,7 +394,8 @@ class Server {
       if (!user) {
         res.writeHead(400, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(JSON.stringify({ message: "User not found" }));
         return;
@@ -382,7 +406,8 @@ class Server {
       if (hashedPassword !== user.password) {
         res.writeHead(401, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(JSON.stringify({ message: "Invalid credentials" }));
         return;
@@ -398,7 +423,8 @@ class Server {
       // Respond with token, email, and role
       res.writeHead(200, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -410,7 +436,8 @@ class Server {
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -436,13 +463,15 @@ class Server {
       // Respond with the list of users
       res.writeHead(200, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(JSON.stringify(users));
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -469,7 +498,8 @@ class Server {
       if (!user) {
         res.writeHead(404, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(JSON.stringify({ message: "User not found" }));
         return;
@@ -479,7 +509,8 @@ class Server {
       if (user.number_of_requests >= 20) {
         res.writeHead(200, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(
           JSON.stringify({
@@ -492,7 +523,8 @@ class Server {
         // Return the user's number_of_requests
         res.writeHead(200, {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin":
+            "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         });
         res.end(
           JSON.stringify({
@@ -503,7 +535,8 @@ class Server {
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+          "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
       });
       res.end(
         JSON.stringify({
@@ -518,7 +551,8 @@ class Server {
   notFound(res) {
     res.writeHead(404, {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin":
+        "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
     });
     res.end(JSON.stringify({ message: "Route not found" }));
   }
