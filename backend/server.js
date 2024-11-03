@@ -68,7 +68,7 @@ class Server {
   // Set CORS headers
   setCorsHeaders(res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PATCH");
     res.setHeader(
       "Access-Control-Allow-Headers",
       "Content-Type, Authorization"
@@ -79,7 +79,7 @@ class Server {
   handleOptions(req, res) {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PATCH",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     });
     res.end();
@@ -205,7 +205,9 @@ class Server {
       }
 
       // Generate a reset code and set an expiry time (e.g., 1 hour from now)
-      const resetCode = crypto.randomBytes(20).toString("hex");
+      // const resetCode = crypto.randomBytes(20).toString("hex");
+
+      const resetCode = crypto.randomInt(100000, 999999).toString(); // 6-digit code
       const resetCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
       // Update the user record with the reset code and expiry
