@@ -1,4 +1,11 @@
-// authentication.js
+/**
+ * ChatGPT was used in authentication.js to help ask questions, generate code, and check for logic errors.
+ * 
+ * @fileoverview This script handles the display and toggling of login and registration forms,
+ * validates form inputs, and manages user authentication by sending registration and login
+ * requests to the backend. Success or error messages are displayed based on server responses.
+ */
+
 
 function showForm(formType) {
   const loginFormContainer = document.getElementById("login-form");
@@ -116,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const loginPasswordInput = loginForm.querySelector('input[name="password"]');
 
   loginForm.addEventListener("submit", function (event) {
-    event.preventDefault(); // Prevent form submission
+    event.preventDefault(); // Prevent form default submission
 
     let isValid = true;
 

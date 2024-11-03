@@ -1,3 +1,9 @@
+/**
+ *  ChatGPT was used in forget_password.js to help ask questions, generate code, and check for logic errors.
+ * 
+ * @fileoverview This script manages the password reset request process, including validating
+ * email input, sending the request to the backend API, and displaying appropriate feedback messages.
+ */
 document.addEventListener("DOMContentLoaded", function () {
     const REQUEST_PASSWORD_RESET_URL = "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/requestPasswordReset"; // URL constant
     const emailInput = document.getElementById("emailInput");

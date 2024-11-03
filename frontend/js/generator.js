@@ -1,3 +1,12 @@
+/**
+  * ChatGPT was used in generator.js to help ask questions, generate code, and check for logic errors.
+  * 
+ * @fileoverview This script handles the audio generation process based on user prompts,
+ * displays an audio player for playback, and provides a download link. It also increments
+ * the user's request count after successful generation.
+ * 
+ **/
+
 document.addEventListener("DOMContentLoaded", function () {
   const token = sessionStorage.getItem("token");
 

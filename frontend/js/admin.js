@@ -1,4 +1,10 @@
-// admin.js
+/**
+ * ChatGPT was used in admin.js to help ask questions, generate code, and check for logic errors.
+ * 
+ * This code checks if a user is logged in by verifying a session token and, if authenticated,
+ *  fetches and displays user data in a table on the admin page.
+ */
+
 document.addEventListener("DOMContentLoaded", () => {
   const token = sessionStorage.getItem("token");
 

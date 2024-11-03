@@ -1,3 +1,11 @@
+/**
+ * ChatGPT was used in home.js to help ask questions, generate code, and check for logic errors.
+ * 
+ * @fileoverview This script retrieves and displays the user's API call usage information,
+ * indicating how many free calls have been made out of the total allowed.
+ * It also displays any additional messages returned by the server.
+ */
+
 document.addEventListener("DOMContentLoaded", async function () {
   // Retrieve token from sessionStorage
   const token = sessionStorage.getItem("token");

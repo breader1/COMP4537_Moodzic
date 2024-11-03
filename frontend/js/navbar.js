@@ -1,3 +1,12 @@
+/**
+ * ChatGPT was used in navbar.js to help ask questions, generate code, and check for logic errors.
+ * 
+ * @fileoverview This script dynamically generates a navigation bar based on the user's
+ * authentication and role, providing distinct options for logged-out users, regular users,
+ * and admins. It also handles user logout functionality.
+ **/
+
+
 document.addEventListener("DOMContentLoaded", function () {
   // Check login state from sessionStorage
   const isLoggedIn = sessionStorage.getItem("token") !== null;
