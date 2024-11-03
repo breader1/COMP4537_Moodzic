@@ -7,13 +7,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "index.html";
   }
 
-  const email = sessionStorage.getItem("email");
   const apiCallsInfo = document.getElementById("apiCallsInfo");
-
-  if (!token || !email) {
-    apiCallsInfo.innerHTML = `<p class="text-danger">User not logged in. Please log in first.</p>`;
-    return;
-  }
 
   try {
     // Make the request to get the number of API calls
