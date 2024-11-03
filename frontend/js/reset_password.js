@@ -42,9 +42,73 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (isValid) {
+
       // Process the reset password logic here (e.g., send data to server)
       // For demonstration, we'll show a success message
-      showSuccessMessage(form, "Your password has been reset successfully!");
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("resetPasswordForm");
+        const resetCodeInput = form.querySelector('input[name="reset_code"]');
+        const newPasswordInput = form.querySelector('input[name="new_password"]');
+        const confirmPasswordInput = form.querySelector('input[name="confirm_password"]');
+        const email = new URLSearchParams(window.location.search).get("email"); // Extract email from URL, if needed
+      
+        form.addEventListener("submit", async function (event) {
+          event.preventDefault(); // Prevent default form submission
+      
+          let isValid = true;
+          clearValidation(form);
+      
+          const resetCode = resetCodeInput.value.trim();
+          const newPassword = newPasswordInput.value;
+          const confirmPassword = confirmPasswordInput.value;
+      
+          if (!resetCode) {
+            showValidationError(resetCodeInput, "Please enter the reset code.");
+            isValid = false;
+          }
+      
+          if (newPassword.length < 3) {
+            showValidationError(newPasswordInput, "Password must be at least 3 characters long.");
+            isValid = false;
+          }
+      
+          if (newPassword !== confirmPassword) {
+            showValidationError(confirmPasswordInput, "Passwords do not match.");
+            isValid = false;
+          }
+      
+          if (isValid) {
+            try {
+              const response = await fetch("http://localhost:3000/resetPassword", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  email: email, // Include email in the request if required by backend
+                  resetCode: resetCode,
+                  newPassword: newPassword,
+                }),
+              });
+      
+              const result = await response.json();
+      
+              if (response.ok) {
+                showSuccessMessage(form, "Your password has been reset successfully!");
+                setTimeout(() => {
+                  form.reset();
+                  clearValidation(form);
+                  window.location.href = "authentication.html"; // Redirect to login page
+                }, 2000);
+              } else {
+                showValidationError(resetCodeInput, result.message);
+              }
+            } catch (error) {
+              showValidationError(resetCodeInput, "An error occurred. Please try again.");
+            }
+          }
+        });
+      });      
 
       // Reset the form after a short delay
       setTimeout(() => {
