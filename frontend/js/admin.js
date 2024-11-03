@@ -1,7 +1,12 @@
 // admin.js
 document.addEventListener("DOMContentLoaded", () => {
-  const apiUrl = serverEndpoints.getAllUsersData; // Replace with the actual endpoint URL
   const token = sessionStorage.getItem("token");
+
+    // Redirect to index if not logged in
+    if (!token) {
+        window.location.href = "index.html";
+    }
+  const apiUrl = serverEndpoints.getAllUsersData; 
 
   // Fetch data from the API
   fetch(apiUrl, {

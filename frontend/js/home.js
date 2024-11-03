@@ -1,9 +1,14 @@
 document.addEventListener("DOMContentLoaded", async function () {
-  const apiCallsInfo = document.getElementById("apiCallsInfo");
-
   // Retrieve token from sessionStorage
   const token = sessionStorage.getItem("token");
+
+  // Redirect to index if not logged in
+  if (!token) {
+    window.location.href = "index.html";
+  }
+
   const email = sessionStorage.getItem("email");
+  const apiCallsInfo = document.getElementById("apiCallsInfo");
 
   if (!token || !email) {
     apiCallsInfo.innerHTML = `<p class="text-danger">User not logged in. Please log in first.</p>`;

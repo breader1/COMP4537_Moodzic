@@ -1,4 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
+  const token = sessionStorage.getItem("token");
+
+  // Redirect to index if not logged in
+  if (!token) {
+    window.location.href = "index.html";
+  }
+
   const promptForm = document.getElementById("promptForm");
   const promptInput = document.getElementById("promptInput");
   const musicDisplay = document.getElementById("musicDisplay");
@@ -72,6 +79,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Optionally reset the form
     promptForm.reset();
   });
+
+  
   // Function to increment the user's number_of_requests
   async function incrementUserRequests() {
     const token = sessionStorage.getItem("token");
