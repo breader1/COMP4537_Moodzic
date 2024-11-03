@@ -4,6 +4,7 @@ const http = require("http");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const db = require("./database/database");
+const nodemailer = require("nodemailer");
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
