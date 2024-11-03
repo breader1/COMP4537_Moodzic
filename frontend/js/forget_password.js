@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+    const REQUEST_PASSWORD_RESET_URL = "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/requestPasswordReset"; // URL constant
     const emailInput = document.getElementById("emailInput");
     const sendButton = document.querySelector('button.btn-primary');
     const messageDiv = document.getElementById("messageDiv");
@@ -30,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Proceed with API request if email is valid
         try {
-            const response = await fetch("http://localhost:3000/requestPasswordReset", {
+            const response = await fetch( REQUEST_PASSWORD_RESET_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
+  const RESET_PASSWORD_URL = "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/resetPassword"; // URL constant
+
   const form = document.getElementById("resetPasswordForm");
   const emailInput = form.querySelector('input[name="email"]');
   const resetCodeInput = form.querySelector('input[name="reset_code"]');
@@ -43,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isValid) {
       try {
         // Send request to the backend
-        const response = await fetch("http://localhost:3000/resetPassword", {
+        const response = await fetch(RESET_PASSWORD_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
