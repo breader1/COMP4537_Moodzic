@@ -5,7 +5,6 @@
  * email input, sending the request to the backend API, and displaying appropriate feedback messages.
  */
 document.addEventListener("DOMContentLoaded", function () {
-    const REQUEST_PASSWORD_RESET_URL = "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/requestPasswordReset"; // URL constant
     const emailInput = document.getElementById("emailInput");
     const sendButton = document.querySelector('button.btn-primary');
     const messageDiv = document.getElementById("messageDiv");
@@ -37,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Proceed with API request if email is valid
         try {
-            const response = await fetch( REQUEST_PASSWORD_RESET_URL, {
+            const response = await fetch( serverEndpoints.requestPasswordReset, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
