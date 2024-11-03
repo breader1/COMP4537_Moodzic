@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Check login state from localStorage
-  const isLoggedIn = localStorage.getItem('token') !== null;
-  const userRole = localStorage.getItem('role');
+  // Check login state from sessionStorage
+  const isLoggedIn = sessionStorage.getItem("token") !== null;
+  const userRole = sessionStorage.getItem("role");
 
   let navbarHtml;
 
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
       </nav>
     `;
-  } else if (isLoggedIn && userRole === '0') {
+  } else if (isLoggedIn && userRole === "0") {
     // Logged in as a regular user
     navbarHtml = `
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
       </nav>
     `;
-  } else if (isLoggedIn && userRole === '1') {
+  } else if (isLoggedIn && userRole === "1") {
     // Logged in as an admin
     navbarHtml = `
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -71,14 +71,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Add event listener for Logout link if user is logged in
   if (isLoggedIn) {
-    const logoutLink = document.getElementById('logout-link');
-    logoutLink.addEventListener('click', function (event) {
+    const logoutLink = document.getElementById("logout-link");
+    logoutLink.addEventListener("click", function (event) {
       event.preventDefault();
       // Clear login state and redirect to login page
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('number_of_requests'); // optional, if you're tracking requests
-      window.location.href = 'index.html';
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("role");
+      sessionStorage.removeItem("number_of_requests"); // optional, if you're tracking requests
+      window.location.href = "index.html";
     });
   }
 });
