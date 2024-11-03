@@ -26,6 +26,10 @@ class Server {
       },
       GET: {
         "/getAllUsersData": this.getAllUsersData.bind(this),
+        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this),
+      },
+      PATCH: {
+        "/incrementUserRequests": this.incrementUserRequests.bind(this),
       },
     };
 
@@ -127,6 +131,60 @@ class Server {
       });
       res.end(JSON.stringify({ message: "Forbidden" }));
       return null;
+    }
+  }
+
+  
+  async incrementUserRequests(req, res) {
+    // Authenticate the user
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return;
+
+    try {
+      // Get the user's current number_of_requests from the database
+      const user = await db.get(
+        "SELECT number_of_requests FROM User WHERE user_id = ?",
+        [decoded.user_id]
+      );
+
+      if (!user) {
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(JSON.stringify({ message: "User not found" }));
+        return;
+      }
+
+      // Increment the user's number_of_requests by 1
+      const updatedRequests = user.number_of_requests + 1;
+      await db.run("UPDATE User SET number_of_requests = ? WHERE user_id = ?", [
+        updatedRequests,
+        decoded.user_id,
+      ]);
+
+      // Return the updated number_of_requests
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(
+        JSON.stringify({
+          message: "Number of Requests Updated Successfully",
+          number_of_requests: updatedRequests,
+        })
+      );
+    } catch (error) {
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(
+        JSON.stringify({
+          message: "Error processing request",
+          error: error.message,
+        })
+      );
     }
   }
 
@@ -335,7 +393,7 @@ class Server {
         { expiresIn: "1h" }
       );
 
-      // Respond with token, num_requests, and role
+      // Respond with token, email, and role
       res.writeHead(200, {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -343,7 +401,7 @@ class Server {
       res.end(
         JSON.stringify({
           token,
-          number_of_requests: user.number_of_requests,
+          email: user.email,
           role: user.role,
         })
       );
@@ -379,6 +437,67 @@ class Server {
         "Access-Control-Allow-Origin": "*",
       });
       res.end(JSON.stringify(users));
+    } catch (error) {
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(
+        JSON.stringify({
+          message: "Error processing request",
+          error: error.message,
+        })
+      );
+    }
+  }
+
+  // New endpoint to get user's number of requests
+  async getUserNumberOfRequests(req, res) {
+    // Authenticate the user
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return;
+
+    try {
+      // Get the user's number of requests from the database
+      const user = await db.get(
+        "SELECT number_of_requests FROM User WHERE user_id = ?",
+        [decoded.user_id]
+      );
+
+      if (!user) {
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(JSON.stringify({ message: "User not found" }));
+        return;
+      }
+
+      // Check if number_of_requests is 20 or more
+      if (user.number_of_requests >= 20) {
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(
+          JSON.stringify({
+            message:
+              "All free tokens have been used up. Your requests will still be processed.",
+            number_of_requests: user.number_of_requests,
+          })
+        );
+      } else {
+        // Return the user's number_of_requests
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(
+          JSON.stringify({
+            number_of_requests: user.number_of_requests,
+          })
+        );
+      }
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": "application/json",
