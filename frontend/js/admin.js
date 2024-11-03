@@ -1,17 +1,26 @@
 /**
  * ChatGPT was used in admin.js to help ask questions, generate code, and check for logic errors.
  * 
- * This code checks if a user is logged in by verifying a session token and, if authenticated,
- *  fetches and displays user data in a table on the admin page.
+ * @fileoverview This code checks if a user is logged in by verifying a session token and, if authenticated,
+ * fetches and displays user data in a table on the admin page.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
   const token = sessionStorage.getItem("token");
 
-    // Redirect to index if not logged in
-    if (!token) {
-        window.location.href = "index.html";
-    }
+  // Redirect to index if not logged in
+  if (!token) {
+    window.location.href = "index.html";
+  }
+
+  const userRole = sessionStorage.getItem("role");
+
+  // Redirect to home if the user is not an admin
+  if (userRole !== "1") {
+    window.location.href = "home.html";
+    return;
+  }
+
   const apiUrl = serverEndpoints.getAllUsersData; 
 
   // Fetch data from the API

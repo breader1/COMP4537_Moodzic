@@ -6,6 +6,6 @@
 
 /* Adjust the textarea height */
 #promptInput {
-    resize: vertical; /* Allow vertical resizing */
-    min-height: 100px; /* Set a minimum height */
+    resize: vertical;
+    min-height: 100px;
 }
