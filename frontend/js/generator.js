@@ -1,86 +1,107 @@
-// // home.js
+document.addEventListener("DOMContentLoaded", function () {
+  const promptForm = document.getElementById("promptForm");
+  const promptInput = document.getElementById("promptInput");
+  const musicDisplay = document.getElementById("musicDisplay");
 
-// document.addEventListener('DOMContentLoaded', function () {
-//     const promptForm = document.getElementById('promptForm');
-//     const promptInput = document.getElementById('promptInput');
+  promptForm.addEventListener("submit", async function (event) {
+    event.preventDefault(); // Prevent the default form submission
 
-//     promptForm.addEventListener('submit', function (event) {
-//         event.preventDefault(); // Prevent the default form submission
+    const promptText = promptInput.value.trim();
 
-//         const promptText = promptInput.value.trim();
+    if (!promptText) {
+      musicDisplay.innerHTML = `<p class="text-danger" style="text-align: center;">Please enter a prompt.</p>`;
+      return;
+    }
 
-//         if (!promptText) {
-//             // Display an error message or handle empty input
-//             alert('Please enter a prompt.');
-//             return;
-//         }
+    // Clear previous audio display and set up "Generating audio..." animation
+    let dotCount = 0;
+    musicDisplay.innerHTML = `<p style="text-align: center;">Generating audio</p>`;
 
-//         // Process the prompt
-//         // For example, send it to a server or display a message
+    // Create a typing effect for the dots
+    const typingInterval = setInterval(() => {
+      dotCount = (dotCount + 1) % 4; // Cycle between 0, 1, 2, and 3 dots
+      musicDisplay.innerHTML = `<p style="text-align: center;">Generating audio${".".repeat(
+        dotCount
+      )}</p>`;
+    }, 500);
 
-//         // Placeholder for processing
-//         alert('Your prompt has been submitted:\n' + promptText);
+    try {
+      // Send the prompt to the server
+      const response = await fetch(llmEndpoint.llm, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          filename: "generated_audio",
+        }),
+      });
 
-//         // Optionally reset the form
-//         promptForm.reset();
-//     });
-// });
+      if (!response.ok) {
+        throw new Error("Failed to generate audio");
+      }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const promptForm = document.getElementById('promptForm');
-    const promptInput = document.getElementById('promptInput');
-    const musicDisplay = document.getElementById('musicDisplay');
+      // Stop the typing animation once audio is ready
+      clearInterval(typingInterval);
 
-    promptForm.addEventListener('submit', async function (event) {
-        event.preventDefault(); // Prevent the default form submission
+      // Convert the response to a Blob (for audio)
+      const audioBlob = await response.blob();
 
-        const promptText = promptInput.value.trim();
+      // Create an audio URL from the Blob
+      const audioUrl = URL.createObjectURL(audioBlob);
 
-        if (!promptText) {
-            alert('Please enter a prompt.');
-            return;
-        }
-
-        // Clear previous audio display
-        musicDisplay.innerHTML = "Generating audio...";
-
-        try {
-            // Send the prompt to the server
-            const response = await fetch(llmEndpoint.llm, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ 
-                    prompt: promptText, 
-                    filename: "generated_audio"
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to generate audio");
-            }
-
-            // Convert the response to a Blob (for audio)
-            const audioBlob = await response.blob();
-
-            // Create an audio URL from the Blob
-            const audioUrl = URL.createObjectURL(audioBlob);
-
-            // Display the audio player
-            musicDisplay.innerHTML = `
+      // Display the audio player
+      musicDisplay.innerHTML = `
+                <p class="text-center fw-bold mt-3">Your Prompt: "${promptText}"</p>
                 <audio controls class="w-100 mt-3">
                     <source src="${audioUrl}" type="audio/wav">
                     Your browser does not support the audio element.
                 </audio>
-                <a href="${audioUrl}" download="generated_audio.wav" class="btn btn-success w-100 mt-2">Download Audio</a>
+                <a href="${audioUrl}" download="generated_audio.wav" class="btn btn-primary w-100 mt-2">Download Audio</a>
             `;
-        } catch (error) {
-            console.error("Error generating audio:", error);
-            musicDisplay.innerHTML = `<p class="text-danger">Failed to generate audio. Please try again.</p>`;
-        }
 
-        // Optionally reset the form
-        promptForm.reset();
-    });
+      // Call to increment the user's request count
+      await incrementUserRequests();
+    } catch (error) {
+      // console.error("Error generating audio:", error);
+      clearInterval(typingInterval);
+      musicDisplay.innerHTML = `<p class="text-danger">Failed to generate audio. Please try again.</p>`;
+    }
+
+    // Optionally reset the form
+    promptForm.reset();
+  });
+  // Function to increment the user's number_of_requests
+  async function incrementUserRequests() {
+    const token = sessionStorage.getItem("token");
+    const errorMessageElement = document.getElementById("errorMessage");
+
+    if (!token) {
+      errorMessageElement.textContent =
+        "Failed to increment request count: User not authenticated.";
+      return;
+    }
+
+    try {
+      const response = await fetch(serverEndpoints.incrementUserRequests, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to increment request count.");
+      }
+
+      // Clear any previous error message if the request is successful
+      errorMessageElement.textContent = "";
+    } catch (error) {
+      errorMessageElement.textContent =
+        "Failed to increment request count. Please try again later.";
+    }
+  }
 });

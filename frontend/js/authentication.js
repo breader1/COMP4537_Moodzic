@@ -159,9 +159,9 @@ document.addEventListener("DOMContentLoaded", function () {
           if (status === 200) {
             // Login successful
             // Store token and user info
-            localStorage.setItem("token", body.token);
-            localStorage.setItem("number_of_requests", body.number_of_requests);
-            localStorage.setItem("role", body.role);
+            sessionStorage.setItem("token", body.token);
+            sessionStorage.setItem("email", body.email);
+            sessionStorage.setItem("role", body.role);
 
             // Redirect to home page
             window.location.href = "home.html";
@@ -219,18 +219,17 @@ function showValidationError(inputElement, message) {
 }
 
 function showGeneralError(form, message) {
-    // Remove any existing general error messages
-    const existingError = form.querySelector('.form-error');
-    if (existingError) {
-        existingError.remove();
-    }
+  // Remove any existing general error messages
+  const existingError = form.querySelector(".form-error");
+  if (existingError) {
+    existingError.remove();
+  }
 
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'alert alert-danger form-error';
-    errorDiv.textContent = message;
-    form.insertBefore(errorDiv, form.firstChild);
+  const errorDiv = document.createElement("div");
+  errorDiv.className = "alert alert-danger form-error";
+  errorDiv.textContent = message;
+  form.insertBefore(errorDiv, form.firstChild);
 }
-
 
 // Helper function to clear validation errors
 function clearValidation(form) {
