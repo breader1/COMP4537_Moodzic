@@ -1,6 +1,8 @@
+import userMessages from './lang/messages/en/user.js';
+
 /**
-  * ChatGPT was used in generator.js to help ask questions, generate code, and check for logic errors.
-  * 
+ * ChatGPT was used in generator.js to help ask questions, generate code, and check for logic errors.
+ * 
  * @fileoverview This script handles the audio generation process based on user prompts,
  * displays an audio player for playback, and provides a download link. It also increments
  * the user's request count after successful generation.
@@ -25,20 +27,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const promptText = promptInput.value.trim();
 
     if (!promptText) {
-      musicDisplay.innerHTML = `<p class="text-danger" style="text-align: center;">Please enter a prompt.</p>`;
+      musicDisplay.innerHTML = `<p class="text-danger" style="text-align: center;">${userMessages.promptEmpty}</p>`;
       return;
     }
 
     // Clear previous audio display and set up "Generating audio..." animation
     let dotCount = 0;
-    musicDisplay.innerHTML = `<p style="text-align: center;">Generating audio</p>`;
+    musicDisplay.innerHTML = `<p style="text-align: center;">${userMessages.generatingAudio}</p>`;
 
     // Create a typing effect for the dots
     const typingInterval = setInterval(() => {
       dotCount = (dotCount + 1) % 4; // Cycle between 0, 1, 2, and 3 dots
-      musicDisplay.innerHTML = `<p style="text-align: center;">Generating audio${".".repeat(
-        dotCount
-      )}</p>`;
+      musicDisplay.innerHTML = `<p style="text-align: center;">${userMessages.generatingAudio}${".".repeat(dotCount)}</p>`;
     }, 500);
 
     try {
@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate audio");
+        throw new Error(userMessages.audioGenerationError);
       }
 
       // Stop the typing animation once audio is ready
@@ -80,9 +80,8 @@ document.addEventListener("DOMContentLoaded", function () {
       // Call to increment the user's request count
       await incrementUserRequests();
     } catch (error) {
-      // console.error("Error generating audio:", error);
       clearInterval(typingInterval);
-      musicDisplay.innerHTML = `<p class="text-danger">Failed to generate audio. Please try again.</p>`;
+      musicDisplay.innerHTML = `<p class="text-danger">${userMessages.audioGenerationError}</p>`;
     }
 
     // Optionally reset the form
@@ -96,8 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const errorMessageElement = document.getElementById("errorMessage");
 
     if (!token) {
-      errorMessageElement.textContent =
-        "Failed to increment request count: User not authenticated.";
+      errorMessageElement.textContent = userMessages.incrementRequestCountAuthError;
       return;
     }
 
@@ -112,14 +110,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || "Failed to increment request count.");
+        throw new Error(data.message || userMessages.incrementRequestCountError);
       }
 
       // Clear any previous error message if the request is successful
       errorMessageElement.textContent = "";
     } catch (error) {
-      errorMessageElement.textContent =
-        "Failed to increment request count. Please try again later.";
+      errorMessageElement.textContent = userMessages.incrementRequestCountError;
     }
   }
 });

@@ -1,3 +1,5 @@
+import userMessages from './lang/messages/en/user.js';
+
 /**
  * ChatGPT was used in admin.js to help ask questions, generate code, and check for logic errors.
  * 
@@ -17,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Redirect to home if the user is not an admin
   if (userRole !== "1") {
+    alert(userMessages.notAuthorized); // Alert user of lack of authorization
     window.location.href = "home.html";
     return;
   }
@@ -35,17 +38,21 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((data) => {
       // Check if response is an error
       if (data.message) {
-        throw new Error(data.message); // Handle unauthorized error
+        throw new Error(data.message);
       }
       displayUserData(data);
     })
-    .catch((error) => console.error("Error fetching user data:", error));
+    .catch((error) => {
+      console.error("Error fetching user data:", error);
+      alert(userMessages.userDataFetchError); // Display error message
+    });
 });
 
 // Function to display user data on the admin page
 function displayUserData(data) {
   if (!Array.isArray(data)) {
     console.error("Data is not an array:", data);
+    alert(userMessages.userDataFetchError); // Show error if data is not an array
     return;
   }
 
