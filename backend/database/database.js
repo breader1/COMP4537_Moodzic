@@ -7,71 +7,58 @@
 "use strict";
 
 const sqlite3 = require("sqlite3").verbose();
+const messages = require("../localization/en/user.js");
 
 class Database {
   constructor(dbFilePath = ":memory:") {
     this.db = new sqlite3.Database(dbFilePath, (err) => {
       if (err) {
-        console.error("Could not connect to database:", err);
+        console.error(messages.database.errors.connection, err);
       } else {
-        console.log("Connected to the SQLite database.");
+        console.log(messages.database.messages.success_connection);
       }
     });
   }
 
   // Initialize tables
-  initializeTables() {
-    this.createUserTable();
-    this.createServiceTable();
-    this.seedUserTable();
+  async initializeTables() {
+    try {
+      await this.createUserTable();
+      await this.createServiceTable();
+      await this.seedUserTable();
+    } catch (err) {
+      console.error(messages.database.errors.table_creation, err);
+    }
   }
 
-  createUserTable() {
-    const sql = `
-        CREATE TABLE IF NOT EXISTS User (
-            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL UNIQUE,
-            number_of_requests INTEGER DEFAULT 0,
-            password TEXT NOT NULL,
-            salt TEXT NOT NULL,
-            role INTEGER DEFAULT 0,
-            reset_code TEXT,                      
-            reset_code_expiry DATETIME,           
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            last_login DATETIME,
-            is_active BOOLEAN DEFAULT 1
-        )
-    `;
-    this.run(sql);
+  async createUserTable() {
+    const sql = messages.database.queries.create.user_table;
+    await this.run(sql);
   }
 
-  createServiceTable() {
-    const sql = `
-            CREATE TABLE IF NOT EXISTS Service (
-                service_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                prompt TEXT,
-                user_id INTEGER,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                is_active BOOLEAN DEFAULT 1,
-                description TEXT,
-                FOREIGN KEY (user_id) REFERENCES User(user_id)
-            )
-        `;
-    this.run(sql);
+  async createServiceTable() {
+    const sql = messages.database.queries.create.service_table;
+    await this.run(sql);
   }
 
-  seedUserTable() {
+  async seedUserTable() {
     const users = [
-      { email: "john@john.com", password: "123", role: 0 },
-      { email: "admin@admin.com", password: "111", role: 1 },
+      {
+        email: messages.database.default_user_email,
+        password: messages.database.default_user_password,
+        role: 0,
+      },
+      {
+        email: messages.database.admin_user_email,
+        password: messages.database.admin_user_password,
+        role: 1,
+      },
     ];
 
-    users.forEach(async (user) => {
+    for (const user of users) {
       // Check if user already exists
       const existingUser = await this.get(
-        "SELECT * FROM User WHERE email = ?",
+        messages.database.queries.select.check_user_exists,
         [user.email]
       );
 
@@ -82,19 +69,27 @@ class Database {
         const hashedPassword = this.hashPassword(user.password, salt);
 
         // Insert the user into the database
-        await this.run(
-          "INSERT INTO User (email, password, salt, role) VALUES (?, ?, ?, ?)",
-          [user.email, hashedPassword, salt, user.role]
-        );
+        await this.run(messages.database.queries.insert.user, [
+          user.email,
+          hashedPassword,
+          salt,
+          user.role,
+        ]);
         console.log(
-          `User with email '${user.email}' has been added to the database.`
+          messages.database.messages.success_user_insert.replace(
+            "{email}",
+            user.email
+          )
         );
       } else {
         console.log(
-          `User with email '${user.email}' already exists. Skipping insertion.`
+          messages.database.messages.skipped_user_insert.replace(
+            "{email}",
+            user.email
+          )
         );
       }
-    });
+    }
   }
 
   // Helper method to generate a random salt
@@ -115,7 +110,7 @@ class Database {
     return new Promise((resolve, reject) => {
       this.db.run(sql, params, function (err) {
         if (err) {
-          console.error("Error running SQL:", sql, err);
+          console.error(messages.database.errors.sql_execution, sql, err);
           reject(err);
         } else {
           resolve(this.lastID);
@@ -129,7 +124,7 @@ class Database {
     return new Promise((resolve, reject) => {
       this.db.all(sql, params, (err, rows) => {
         if (err) {
-          console.error("Error fetching rows:", sql, err);
+          console.error(messages.database.errors.fetch_all_rows, sql, err);
           reject(err);
         } else {
           resolve(rows);
@@ -143,7 +138,7 @@ class Database {
     return new Promise((resolve, reject) => {
       this.db.get(sql, params, (err, row) => {
         if (err) {
-          console.error("Error fetching row:", sql, err);
+          console.error(messages.database.errors.fetch_single_row, sql, err);
           reject(err);
         } else {
           resolve(row);
@@ -156,16 +151,14 @@ class Database {
   close() {
     this.db.close((err) => {
       if (err) {
-        console.error("Error closing the database:", err);
+        console.error(messages.database.errors.closing_db, err);
       } else {
-        console.log("Closed the database connection.");
+        console.log(messages.database.messages.success_closed_db);
       }
     });
   }
 }
 
-// Usage example:
-const db = new Database("moodzic.db");
-db.initializeTables();
+const db = new Database(messages.database.database_name);
 
 module.exports = db;
