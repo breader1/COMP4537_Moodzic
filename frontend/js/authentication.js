@@ -274,7 +274,6 @@ function showSuccessMessage(form, message) {
 // Helper function to handle backend errors
 function handleBackendErrors(form, body) {
   if (body.errors) {
-    // Display field-specific errors
     for (const field in body.errors) {
       if (field === "general") {
         // Display general error message
@@ -290,7 +289,6 @@ function handleBackendErrors(form, body) {
     // Display general error message
     showGeneralError(form, body.message);
   } else {
-    // Fallback error message
     showGeneralError(form, "An error occurred. Please try again.");
   }
 }
