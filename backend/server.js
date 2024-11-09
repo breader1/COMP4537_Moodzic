@@ -13,7 +13,7 @@ const db = require("./database/database");
 const nodemailer = require("nodemailer");
 const messages = require("./localization/en/user.js");
 
-const CORS_ORIGIN_URL = messages.server.cors.allow_origin.prod;
+const CORS_ORIGIN_URL = messages.server.cors.allow_origin.dev;
 const CORS_METHODS = messages.server.cors.allow_methods;
 const CORS_HEADERS = messages.server.cors.allow_headers;
 const CORS_CONTENT_TYPE = messages.server.cors.allow_content_type;
@@ -479,6 +479,61 @@ class Server {
       res.writeHead(500, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(
+        JSON.stringify({
+          message: messages.server.errors.generic_500,
+          error: error.message,
+        })
+      );
+    }
+  }
+
+  async incrementUserRequests(req, res) {
+    // Authenticate the user
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return;
+
+    try {
+      // Get the user's current number_of_requests from the database
+      const user = await db.get(
+        messages.database.queries.select.num_user_requests,
+        [decoded.user_id]
+      );
+
+      if (!user) {
+        res.writeHead(404, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(JSON.stringify({ message: messages.server.errors.user_not_found }));
+        return;
+      }
+
+      // Increment the user's number_of_requests by 1
+      const updatedRequests = user.number_of_requests + 1;
+      await db.run(messages.database.queries.update.num_user_requests, [
+        updatedRequests,
+        decoded.user_id,
+      ]);
+
+      // Return the updated number_of_requests
+      res.writeHead(200, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin":
+          CORS_ORIGIN_URL,
+      });
+      res.end(
+        JSON.stringify({
+          message: messages.server.success.request_updated,
+          number_of_requests: updatedRequests,
+        })
+      );
+    } catch (error) {
+      res.writeHead(500, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin":
+          CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
