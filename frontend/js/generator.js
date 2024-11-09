@@ -1,5 +1,3 @@
-import userMessages from './lang/messages/en/user.js';
-
 /**
  * ChatGPT was used in generator.js to help ask questions, generate code, and check for logic errors.
  * 
