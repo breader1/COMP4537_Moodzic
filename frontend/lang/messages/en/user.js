@@ -4,14 +4,21 @@ const method = {
 }
 
 const serverEndpoints = {
-    register: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/register',
-    login: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/login',
-    getAllUsersData: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/getAllUsersData',
-    getUserNumberOfRequests: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/getUserNumberOfRequests',
-    incrementUserRequests: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/incrementUserRequests',
-    requestPasswordReset: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/requestPasswordReset',
-    resetPassword: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/resetPassword',
-}
+  // register: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/register',
+  // login: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/login',
+  // getAllUsersData: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/getAllUsersData',
+  // getUserNumberOfRequests: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/getUserNumberOfRequests',
+  // incrementUserRequests: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/incrementUserRequests',
+  // requestPasswordReset: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/requestPasswordReset',
+  // resetPassword: 'https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/resetPassword'
+  register: "http://localhost:3000/register",
+  login: "http://localhost:3000/login",
+  getAllUsersData: "http://localhost:3000/getAllUsersData",
+  getUserNumberOfRequests: "http://localhost:3000/getUserNumberOfRequests",
+  incrementUserRequests: "http://localhost:3000/incrementUserRequests",
+  requestPasswordReset: "http://localhost:3000/requestPasswordReset",
+  resetPassword: "http://localhost:3000/resetPassword",
+};
 
 const llmEndpoint = {
     llm: 'https://fresh-insect-severely.ngrok-free.app/generate-audio'
@@ -41,8 +48,6 @@ const userMessages = {
     notAuthorized: "You are not authorized to view this page.",
     userDataFetchError: "Error fetching user data. Please try again later.",
 };
-
-export default userMessages;
 
 
 
