@@ -1,3 +1,5 @@
+import userMessages from './lang/messages/en/user.js';
+
 /**
  * ChatGPT was used in authentication.js to help ask questions, generate code, and check for logic errors.
  * 
@@ -6,15 +8,14 @@
  * requests to the backend. Success or error messages are displayed based on server responses.
  */
 
-
 function showForm(formType) {
   const loginFormContainer = document.getElementById("login-form");
   const registerFormContainer = document.getElementById("register-form");
 
-  if (formType == "login") {
+  if (formType === "login") {
     loginFormContainer.classList.remove("d-none");
     registerFormContainer.classList.add("d-none");
-  } else if (formType == "register") {
+  } else if (formType === "register") {
     loginFormContainer.classList.add("d-none");
     registerFormContainer.classList.remove("d-none");
   }
@@ -27,19 +28,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Registration Form Validation
   const registerForm = document.getElementById("registerForm");
   const registerEmailInput = registerForm.querySelector('input[name="email"]');
-  const registerPasswordInput = registerForm.querySelector(
-    'input[name="password"]'
-  );
-  const registerConfirmPasswordInput = registerForm.querySelector(
-    'input[name="confirm_password"]'
-  );
+  const registerPasswordInput = registerForm.querySelector('input[name="password"]');
+  const registerConfirmPasswordInput = registerForm.querySelector('input[name="confirm_password"]');
 
   registerForm.addEventListener("submit", function (event) {
     event.preventDefault(); // Prevent form submission
 
     let isValid = true;
-
-    // Clear previous error states
     clearValidation(registerForm);
 
     const email = registerEmailInput.value.trim();
@@ -48,28 +43,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Email validation
     if (!email || !isValidEmail(email)) {
-      showValidationError(
-        registerEmailInput,
-        "Please enter a valid email address."
-      );
+      showValidationError(registerEmailInput, userMessages.emailInvalid);
       isValid = false;
     }
 
     // Password length validation
     if (password.length < 3) {
-      showValidationError(
-        registerPasswordInput,
-        "Password must be at least 3 characters long."
-      );
+      showValidationError(registerPasswordInput, userMessages.passwordTooShort);
       isValid = false;
     }
 
     // Password match validation
     if (password !== confirmPassword) {
-      showValidationError(
-        registerConfirmPasswordInput,
-        "Passwords do not match."
-      );
+      showValidationError(registerConfirmPasswordInput, userMessages.passwordMismatch);
       isValid = false;
     }
 
@@ -83,19 +69,11 @@ document.addEventListener("DOMContentLoaded", function () {
         body: JSON.stringify({ email: email, password: password }),
       })
         .then((response) =>
-          response
-            .json()
-            .then((data) => ({ status: response.status, body: data }))
+          response.json().then((data) => ({ status: response.status, body: data }))
         )
         .then(({ status, body }) => {
           if (status === 201) {
-            // Registration successful
-            showSuccessMessage(
-              registerForm,
-              "Registration successful! You can now log in."
-            );
-
-            // Reset the form after a short delay
+            showSuccessMessage(registerForm, userMessages.registrationSuccess);
             setTimeout(() => {
               registerForm.reset();
               clearValidation(registerForm);
@@ -109,10 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch((error) => {
           console.error("Error:", error);
-          showGeneralError(
-            registerForm,
-            "An error occurred during registration. Please try again later."
-          );
+          showGeneralError(registerForm, userMessages.registrationError);
         });
     }
   });
@@ -135,16 +110,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Email validation
     if (!email || !isValidEmail(email)) {
-      showValidationError(
-        loginEmailInput,
-        "Please enter a valid email address."
-      );
+      showValidationError(loginEmailInput, userMessages.emailInvalid);
       isValid = false;
     }
 
     // Password validation
     if (!password) {
-      showValidationError(loginPasswordInput, "Please enter your password.");
+      showValidationError(loginPasswordInput, userMessages.enterPassword);
       isValid = false;
     }
 
@@ -158,9 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
         body: JSON.stringify({ email: email, password: password }),
       })
         .then((response) =>
-          response
-            .json()
-            .then((data) => ({ status: response.status, body: data }))
+          response.json().then((data) => ({ status: response.status, body: data }))
         )
         .then(({ status, body }) => {
           if (status === 200) {
@@ -187,17 +157,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 showGeneralError(loginForm, body.message);
               }
             } else {
-              // Fallback error message
-              showGeneralError(loginForm, "Login failed. Please try again.");
+              showGeneralError(loginForm, userMessages.loginFailed);
             }
           }
         })
         .catch((error) => {
           console.error("Error:", error);
-          showGeneralError(
-            loginForm,
-            "An error occurred while logging in. Please try again later."
-          );
+          showGeneralError(loginForm, userMessages.loginError);
         });
     }
   });
@@ -214,10 +180,7 @@ function isValidEmail(email) {
 function showValidationError(inputElement, message) {
   inputElement.classList.add("is-invalid");
   let feedbackElement = inputElement.nextElementSibling;
-  if (
-    !feedbackElement ||
-    !feedbackElement.classList.contains("invalid-feedback")
-  ) {
+  if (!feedbackElement || !feedbackElement.classList.contains("invalid-feedback")) {
     feedbackElement = document.createElement("div");
     feedbackElement.className = "invalid-feedback";
     inputElement.parentNode.appendChild(feedbackElement);

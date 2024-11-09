@@ -1,3 +1,5 @@
+import userMessages from './lang/messages/en/user.js';
+
 /**
  * ChatGPT was used in home.js to help ask questions, generate code, and check for logic errors.
  * 
@@ -31,12 +33,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (!response.ok) {
       throw new Error(
-        data.message || "Failed to retrieve API call information."
+        data.message || userMessages.apiCallsError
       );
     }
 
     // Display the number of requests
-    let message = `You have made ${data.number_of_requests} out of 20 free API calls.`;
+    let message = userMessages.apiCallsInfo.replace("{number}", data.number_of_requests);
 
     // Display additional message if available
     if (data.message) {
@@ -46,6 +48,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     apiCallsInfo.innerHTML = message;
   } catch (error) {
     console.error("Error fetching user request data:", error);
-    apiCallsInfo.innerHTML = `<p class="text-danger">Failed to retrieve API call information. Please try again later.</p>`;
+    apiCallsInfo.innerHTML = `<p class="text-danger">${userMessages.apiCallsError}</p>`;
   }
 });
