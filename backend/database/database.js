@@ -15,7 +15,7 @@ class Database {
       if (err) {
         console.error(messages.database.errors.connection, err);
       } else {
-        console.log(messages.database.messages.success_connection);
+        console.log(messages.database.success.connection);
       }
     });
   }
@@ -76,17 +76,11 @@ class Database {
           user.role,
         ]);
         console.log(
-          messages.database.messages.success_user_insert.replace(
-            "{email}",
-            user.email
-          )
+          messages.database.success.user_insert.replace("{email}", user.email)
         );
       } else {
         console.log(
-          messages.database.messages.skipped_user_insert.replace(
-            "{email}",
-            user.email
-          )
+          messages.database.warnings.skipped_user_insert.replace("{email}",user.email)
         );
       }
     }
@@ -153,7 +147,7 @@ class Database {
       if (err) {
         console.error(messages.database.errors.closing_db, err);
       } else {
-        console.log(messages.database.messages.success_closed_db);
+        console.log(messages.database.messages.closed_db);
       }
     });
   }

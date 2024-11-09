@@ -13,9 +13,9 @@ const db = require("./database/database");
 const nodemailer = require("nodemailer");
 const messages = require("./localization/en/user.js");
 
-const CORS_ORIGIN_URL = messages.server.cors.allowOrigin.prod;
-const CORS_METHODS = messages.server.cors.allowMethods;
-const CORS_HEADERS = messages.server.cors.allowHeaders;
+const CORS_ORIGIN_URL = messages.server.cors.allow_origin.prod;
+const CORS_METHODS = messages.server.cors.allow_methods;
+const CORS_HEADERS = messages.server.cors.allow_headers;
 const CORS_CONTENT_TYPE = messages.server.cors.allow_content_type;
 const MAX_API_CALLS = 20;
 
@@ -60,7 +60,7 @@ class Server {
   start() {
     this.server.listen(PORT, () => {
       console.log(
-        messages.server.messages.success.server_running.replace("{port}", PORT)
+        messages.server.success.server_running.replace("{port}", PORT)
       );
     });
   }
@@ -163,7 +163,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.warnings.user_exists,
+            message: messages.server.warnings.user_exists,
           })
         );
         return;
@@ -184,7 +184,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.success.user_created,
+          message: messages.server.success.user_created,
         })
       );
     } catch (error) {
@@ -194,7 +194,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.errors.generic_500,
+          message: messages.server.errors.generic_500,
           error: error.message,
         })
       );
@@ -218,7 +218,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.errors.user_not_found,
+            message: messages.server.errors.user_not_found,
           })
         );
         return;
@@ -232,7 +232,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.errors.invalid_credentials,
+            message: messages.server.errors.invalid_credentials,
           })
         );
         return;
@@ -256,7 +256,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.errors.generic_500,
+          message: messages.server.errors.generic_500,
           error: error.message,
         })
       );
@@ -279,7 +279,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.errors.user_not_found,
+            message: messages.server.errors.user_not_found,
           })
         );
         return;
@@ -288,7 +288,7 @@ class Server {
       const resetCode = crypto.randomInt(100000, 999999).toString();
       const resetCodeExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
-      await db.run(messages.database.queries.update.update_user_reset_code, [
+      await db.run(messages.database.queries.update.user_reset_code, [
         resetCode,
         resetCodeExpiry,
         email,
@@ -302,7 +302,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.success.reset_code_sent,
+          message: messages.server.success.reset_code_sent,
         })
       );
     } catch (error) {
@@ -312,7 +312,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.errors.generic_500,
+          message: messages.server.errors.generic_500,
           error: error.message,
         })
       );
@@ -348,7 +348,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.errors.invalid_reset,
+            message: messages.server.errors.invalid_reset,
           })
         );
         return;
@@ -362,7 +362,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.errors.reset_code_expired,
+            message: messages.server.errors.reset_code_expired,
           })
         );
         return;
@@ -371,10 +371,11 @@ class Server {
       const salt = crypto.randomBytes(16).toString("hex");
       const hashedPassword = this.hashPassword(newPassword, salt);
 
-      await db.run(
-        messages.database.queries.update.update_password_clear_reset_code,
-        [hashedPassword, salt, email]
-      );
+      await db.run(messages.database.queries.update.password_clear_reset_code, [
+        hashedPassword,
+        salt,
+        email,
+      ]);
 
       res.writeHead(200, {
         "Content-Type": CORS_CONTENT_TYPE,
@@ -382,7 +383,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.success.password_updated,
+          message: messages.server.success.password_updated,
         })
       );
     } catch (error) {
@@ -392,7 +393,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.errors.generic_500,
+          message: messages.server.errors.generic_500,
           error: error.message,
         })
       );
@@ -406,7 +407,7 @@ class Server {
 
     try {
       const users = await db.getAll(
-        messages.database.queries.select.get_all_users_requests
+        messages.database.queries.select.all_users_requests
       );
 
       res.writeHead(200, {
@@ -421,7 +422,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.errors.generic_500,
+          message: messages.server.errors.generic_500,
           error: error.message,
         })
       );
@@ -435,7 +436,7 @@ class Server {
 
     try {
       const user = await db.get(
-        messages.database.queries.select.get_single_users_requests,
+        messages.database.queries.select.single_user_requests,
         [decoded.user_id]
       );
 
@@ -446,7 +447,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.errors.user_not_found,
+            message: messages.server.errors.user_not_found,
           })
         );
         return;
@@ -459,7 +460,7 @@ class Server {
         });
         res.end(
           JSON.stringify({
-            message: messages.server.messages.warnings.usage_exceeded,
+            message: messages.server.warnings.usage_exceeded,
             number_of_requests: user.number_of_requests,
           })
         );
@@ -481,7 +482,7 @@ class Server {
       });
       res.end(
         JSON.stringify({
-          message: messages.server.messages.errors.generic_500,
+          message: messages.server.errors.generic_500,
           error: error.message,
         })
       );
@@ -496,7 +497,7 @@ class Server {
     });
     res.end(
       JSON.stringify({
-        message: messages.server.messages.errors.route_not_found,
+        message: messages.server.errors.route_not_found,
       })
     );
   }

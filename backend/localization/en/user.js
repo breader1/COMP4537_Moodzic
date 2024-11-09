@@ -13,11 +13,12 @@ const messages = {
       fetch_single_row: "Error fetching row:",
       sql_execution: "Error running SQL:",
     },
-    messages: {
-      success_connection: "Connected to the Sqlite Database.",
-      success_closed_db: "Closed the database connection.",
-      success_user_insert:
-        "User with email '{email}' has been added to the database.",
+    success: {
+      connection: "Connected to the Sqlite Database.",
+      closed_db: "Closed the database connection.",
+      user_insert: "User with email '{email}' has been added to the database.",
+    },
+    warnings: {
       skipped_user_insert:
         "User with email '{email}' already exists. Skipping insertion.",
     },
@@ -87,32 +88,32 @@ const messages = {
     },
     email: {
       body: "Your password reset code is: {reset_code}",
-      body_html: `<p>You requested a password reset.</p><p>Your reset code is: <b>${resetCode}</b></p>`,
+      body_html: `<p>You requested a password reset.</p><p>Your reset code is: <b>{resetCode}</b></p>`,
       service: "gmail",
       subject: "Password Reset Request",
     },
-    messages: {
-      errors: {
-        generic_500: "Error processing the request",
-        invalid_credentials: "Invalid Credentials",
-        invalid_reset: "Invalid Reset Code or User Not Found",
-        reset_code_expired: "Reset Code has expired.",
-        route_not_found: "Route Not Found",
-        user_not_found: "User Not Found",
-      },
-      success: {
-        password_updated: "Password Updated Successfully",
-        request_updated: "Number of Requests Updated Successfully",
-        reset_code_sent: "Reset Code Sent Successfully",
-        server_running: "Server is running on port {port}.",
-        user_created: "User Created Successfully",
-      },
-      warnings: {
-        usage_exceeded:
-          "All free tokens have been used up. Your requests will still be processed.",
-        user_exists: "User already exists",
-      },
+    errors: {
+      generic_500: "Error processing the request",
+      invalid_credentials: "Invalid Credentials",
+      invalid_reset: "Invalid Reset Code or User Not Found",
+      reset_code_expired: "Reset Code has expired.",
+      route_not_found: "Route Not Found",
+      user_not_found: "User Not Found",
+    },
+    success: {
+      password_updated: "Password Updated Successfully",
+      request_updated: "Number of Requests Updated Successfully",
+      reset_code_sent: "Reset Code Sent Successfully",
+      server_running: "Server is running on port {port}.",
+      user_created: "User Created Successfully",
+    },
+    warnings: {
+      usage_exceeded:
+        "All free tokens have been used up. Your requests will still be processed.",
+      user_exists: "User already exists",
     },
     port: 3000,
   },
 };
+
+module.exports = messages;
