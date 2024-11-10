@@ -17,6 +17,7 @@ const messages = {
       connection: "Connected to the Sqlite Database.",
       closed_db: "Closed the database connection.",
       user_insert: "User with email '{email}' has been added to the database.",
+      user_deleted: "User with id '{id}' has been deleted from the database.",
     },
     warnings: {
       skipped_user_insert:
@@ -39,8 +40,8 @@ const messages = {
             last_login DATETIME,
             is_active BOOLEAN DEFAULT 1
           )`,
-        service_table: `
-          CREATE TABLE IF NOT EXISTS Service (
+        request_table: `
+          CREATE TABLE IF NOT EXISTS Request (
             service_id INTEGER PRIMARY KEY AUTOINCREMENT,
             prompt TEXT,
             user_id INTEGER,
@@ -56,6 +57,7 @@ const messages = {
       },
       select: {
         check_user_exists: "SELECT * FROM User WHERE email = ?",
+        check_user_exists_by_id: "SELECT * FROM User WHERE user_id = ?",
         all_users_requests: "SELECT email, number_of_requests FROM User",
         num_user_requests:
           "SELECT number_of_requests FROM User WHERE user_id = ?",
@@ -69,6 +71,10 @@ const messages = {
           "UPDATE User SET password = ?, salt = ?, reset_code = NULL, reset_code_expiry = NULL WHERE email = ?",
         user_reset_code:
           "UPDATE User SET reset_code = ?, reset_code_expiry = ? WHERE email = ?",
+        user_role_by_id: "UPDATE User SET role = ? WHERE user_id = ?",
+      },
+      delete: {
+        user_by_id: "DELETE FROM User WHERE user_id = ?",
       },
     },
   },

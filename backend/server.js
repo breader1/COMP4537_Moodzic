@@ -39,10 +39,17 @@ class Server {
       },
       GET: {
         "/getAllUsersData": this.getAllUsersData.bind(this),
-        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this),
+        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this), //TODO: move the requests to the requests table
+        //get numer of endpoint called overall
+
+        //get numer of endpoint called by user
       },
       PATCH: {
         "/incrementUserRequests": this.incrementUserRequests.bind(this),
+        "/updateRole/:id": this.updateUserRole.bind(this),
+      },
+      DELETE: {
+        "/delete/:id": this.deleteUser.bind(this),
       },
     };
 
@@ -56,39 +63,7 @@ class Server {
     });
   }
 
-  // Start the server
-  start() {
-    this.server.listen(PORT, () => {
-      console.log(
-        messages.server.success.server_running.replace("{port}", PORT)
-      );
-    });
-  }
-
-  // Main request handler
-  async handleRequest(req, res) {
-    // Set CORS headers for every request
-    this.setCorsHeaders(res);
-
-    const methodRoutes = this.routes[req.method];
-    const handler =
-      methodRoutes && (methodRoutes[req.url] || methodRoutes["*"]);
-
-    if (handler) {
-      await handler(req, res);
-    } else {
-      this.notFound(res);
-    }
-  }
-
-  // Set CORS headers
-  setCorsHeaders(res) {
-    res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN_URL);
-    res.setHeader("Access-Control-Allow-Methods", CORS_METHODS);
-    res.setHeader("Access-Control-Allow-Headers", CORS_HEADERS);
-  }
-
-  // Handle OPTIONS request
+  //----------OPTIONS-----------
   handleOptions(req, res) {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
@@ -98,56 +73,7 @@ class Server {
     res.end();
   }
 
-  // Helper function to parse JSON body
-  parseJSONBody(req) {
-    return new Promise((resolve, reject) => {
-      let body = "";
-      req.on("data", (chunk) => {
-        body += chunk.toString();
-      });
-      req.on("end", () => {
-        try {
-          resolve(JSON.parse(body));
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-  }
-
-  // Helper function for password hashing
-  hashPassword(password, salt) {
-    const hash = crypto.createHash("sha256");
-    hash.update(password + salt);
-    return hash.digest("hex");
-  }
-
-  // Middleware function to authenticate JWT token
-  authenticateToken(req, res) {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    if (!token) {
-      res.writeHead(401, {
-        "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-      });
-      res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
-      return null;
-    }
-
-    try {
-      return jwt.verify(token, JWT_SECRET);
-    } catch (err) {
-      res.writeHead(403, {
-        "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-      });
-      res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
-      return null;
-    }
-  }
-
-  // Route: Register a new user
+  //----------POST-----------
   async register(req, res) {
     try {
       const { email, password } = await this.parseJSONBody(req);
@@ -201,7 +127,6 @@ class Server {
     }
   }
 
-  // Route: Login a user
   async login(req, res) {
     try {
       const { email, password } = await this.parseJSONBody(req);
@@ -263,7 +188,6 @@ class Server {
     }
   }
 
-  // Route: Request Password Reset
   async requestPasswordReset(req, res) {
     try {
       const { email } = await this.parseJSONBody(req);
@@ -319,20 +243,6 @@ class Server {
     }
   }
 
-  // Method: Send Reset Email
-  async sendResetEmail(email, resetCode) {
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: messages.server.email.subject,
-      text: messages.server.email.body.replace("{reset_code}", resetCode),
-      html: messages.server.email.body_html.replace("{resetCode}", resetCode),
-    };
-
-    await this.transporter.sendMail(mailOptions);
-  }
-
-  // Route: Reset Password
   async resetPassword(req, res) {
     try {
       const { email, resetCode, newPassword } = await this.parseJSONBody(req);
@@ -400,7 +310,7 @@ class Server {
     }
   }
 
-  // Route: Get All Users Data
+  //----------GET-----------
   async getAllUsersData(req, res) {
     const decoded = this.authenticateToken(req, res);
     if (!decoded) return;
@@ -429,7 +339,6 @@ class Server {
     }
   }
 
-  // Route: Get User Number of Requests
   async getUserNumberOfRequests(req, res) {
     const decoded = this.authenticateToken(req, res);
     if (!decoded) return;
@@ -489,6 +398,7 @@ class Server {
     }
   }
 
+  //----------PATCH-----------
   async incrementUserRequests(req, res) {
     // Authenticate the user
     const decoded = this.authenticateToken(req, res);
@@ -506,7 +416,9 @@ class Server {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
-        res.end(JSON.stringify({ message: messages.server.errors.user_not_found }));
+        res.end(
+          JSON.stringify({ message: messages.server.errors.user_not_found })
+        );
         return;
       }
 
@@ -520,8 +432,7 @@ class Server {
       // Return the updated number_of_requests
       res.writeHead(200, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin":
-          CORS_ORIGIN_URL,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
@@ -532,8 +443,7 @@ class Server {
     } catch (error) {
       res.writeHead(500, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin":
-          CORS_ORIGIN_URL,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
@@ -542,6 +452,262 @@ class Server {
         })
       );
     }
+  }
+
+  async updateUserRole(req, res, params) {
+    const id = params.id;
+    try {
+      // Check if the requesting user is an admin
+      const isAdmin = await this.isAdmin(req, res);
+      if (!isAdmin) {
+        res.writeHead(403, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(
+          JSON.stringify({ message: messages.server.auth.forbidden })
+        );
+        return;
+      }
+
+      // Retrieve the target user from the database
+      const user = await db.get(
+        messages.database.queries.select.check_user_exists_by_id,
+        [id]
+      );
+      if (!user) {
+        res.writeHead(404, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(
+          JSON.stringify({ message: messages.server.errors.user_not_found })
+        );
+        return;
+      }
+
+      // Toggle the user's role
+      const newRole = user.role === 1 ? 0 : 1;
+      await db.run(messages.database.queries.update.user_role_by_id, [newRole, id]);
+
+      // Send success response with the updated role
+      res.writeHead(200, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(
+        JSON.stringify({
+          message: `User: ${id} role updated successfully to ${newRole}`,
+          newRole,
+        })
+      );
+    } catch (error) {
+      if (!res.headersSent) {
+        res.writeHead(500, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(
+          JSON.stringify({
+            message: messages.server.errors.generic_500,
+            error: error.message,
+          })
+        );
+      }
+    }
+  }
+
+  //----------DELETE-----------
+  async deleteUser(req, res, params) {
+    const id = params.id;
+    try {
+      // Check if the requesting user is an admin
+      const isAdmin = await this.isAdmin(req, res);
+      if (!isAdmin) {
+        res.writeHead(403, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(
+          JSON.stringify({ message: messages.server.auth.unauthorized })
+        );
+        return;
+      }
+
+      // Check if the target user (to be deleted) exists
+      const userToDelete = await db.get(
+        messages.database.queries.select.check_user_exists_by_id,
+        [id.toString()]
+      );
+
+      if (!userToDelete) {
+        res.writeHead(404, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(
+          JSON.stringify({ message: messages.server.errors.user_not_found })
+        );
+        return;
+      }
+
+      // Proceed with deletion
+      await db.run(messages.database.queries.delete.user_by_id, [
+        id.toString(),
+      ]);
+
+      // Prepare success message - This had to be handled like this because
+      // the headers were already being sent and the id was not being replaced in the message
+      const successMessage = messages.server.success.user_deleted
+        ? messages.server.success.user_deleted.replace("{id}", id)
+        : `User with ID ${id} has been deleted successfully.`;
+
+      // Send success response
+      res.writeHead(200, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(JSON.stringify({ message: successMessage }));
+    } catch (error) {
+      if (!res.headersSent) {
+        res.writeHead(500, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(
+          JSON.stringify({
+            message: messages.server.errors.generic_500,
+            error: error.message,
+          })
+        );
+      }
+    }
+  }
+
+  // Start the server
+  start() {
+    this.server.listen(PORT, () => {
+      console.log(
+        messages.server.success.server_running.replace("{port}", PORT)
+      );
+    });
+  }
+
+  matchRoute(route, url) {
+    const routeParts = route.split("/");
+    const urlParts = url.split("/");
+
+    if (routeParts.length !== urlParts.length) return null;
+
+    const params = {};
+    for (let i = 0; i < routeParts.length; i++) {
+      if (routeParts[i].startsWith(":")) {
+        const paramName = routeParts[i].substring(1);
+        params[paramName] = urlParts[i];
+      } else if (routeParts[i] !== urlParts[i]) {
+        return null;
+      }
+    }
+    return params; // Return parameters if all parts match
+  }
+
+  //handle the request
+  async handleRequest(req, res) {
+    // Set CORS headers for every request
+    this.setCorsHeaders(res);
+
+    const methodRoutes = this.routes[req.method];
+    if (!methodRoutes) {
+      this.notFound(res);
+      return;
+    }
+
+    // Attempt to match static and dynamic routes
+    let handler;
+    let params = null;
+
+    for (const route in methodRoutes) {
+      params = this.matchRoute(route, req.url);
+      if (params) {
+        handler = methodRoutes[route];
+        break;
+      }
+    }
+
+    if (handler) {
+      await handler(req, res, params); // Pass params to the handler if matched
+    } else {
+      this.notFound(res);
+    }
+  }
+
+  // Set CORS headers
+  setCorsHeaders(res) {
+    res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN_URL);
+    res.setHeader("Access-Control-Allow-Methods", CORS_METHODS);
+    res.setHeader("Access-Control-Allow-Headers", CORS_HEADERS);
+  }
+
+  // Helper function to parse JSON body
+  parseJSONBody(req) {
+    return new Promise((resolve, reject) => {
+      let body = "";
+      req.on("data", (chunk) => {
+        body += chunk.toString();
+      });
+      req.on("end", () => {
+        try {
+          resolve(JSON.parse(body));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+
+  // Helper function for password hashing
+  hashPassword(password, salt) {
+    const hash = crypto.createHash("sha256");
+    hash.update(password + salt);
+    return hash.digest("hex");
+  }
+
+  // Middleware function to authenticate JWT token
+  authenticateToken(req, res) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (!token) {
+      res.writeHead(401, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
+      return null;
+    }
+
+    try {
+      return jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      res.writeHead(403, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
+      return null;
+    }
+  }
+
+  // Method: Send Reset Email
+  async sendResetEmail(email, resetCode) {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: messages.server.email.subject,
+      text: messages.server.email.body.replace("{reset_code}", resetCode),
+      html: messages.server.email.body_html.replace("{resetCode}", resetCode),
+    };
+
+    await this.transporter.sendMail(mailOptions);
   }
 
   // Helper function to handle 404 Not Found
@@ -555,6 +721,19 @@ class Server {
         message: messages.server.errors.route_not_found,
       })
     );
+  }
+
+  // Function to check if the requesting user is an admin
+  async isAdmin(req, res) {
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return false; // Return false if the user is not authenticated
+
+    // Check the user's role in the database
+    const user = await db.get(
+      messages.database.queries.select.check_user_exists_by_id,
+      [decoded.user_id]
+    );
+    return user && user.role === 1; // Return true if the user is found and has an admin role
   }
 }
 
