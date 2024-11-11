@@ -37,7 +37,7 @@ class Database {
   }
 
   async createServiceTable() {
-    const sql = messages.database.queries.create.service_table;
+    const sql = messages.database.queries.create.request_table;
     await this.run(sql);
   }
 
@@ -80,7 +80,10 @@ class Database {
         );
       } else {
         console.log(
-          messages.database.warnings.skipped_user_insert.replace("{email}",user.email)
+          messages.database.warnings.skipped_user_insert.replace(
+            "{email}",
+            user.email
+          )
         );
       }
     }
