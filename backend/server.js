@@ -38,14 +38,19 @@ class Server {
         "/resetPassword": this.resetPassword.bind(this),
       },
       GET: {
-        "/getAllUsersData": this.getAllUsersData.bind(this),
-        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this), //TODO: move the requests to the requests table
-        //get numer of endpoint called overall
+        "/getAllUsersData": this.getAllUsersData.bind(this),//TODO: rename this - update logic to get email, total number of HTTP requests including LLM Requests.
+        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this), //TODO: move the requests to the requests table //rename this to getUserNumberOfLLMRequests
+        //get number of endpoints called by the endpoint url
+        //meaning /login has been called 10 times, and the http method is POST
+        //Method     Endpoint       Number of Requests
+        //POST       /login         10
+
 
         //get numer of endpoint called by user
+        //This is the first GET endpoint - think of a better name for this please for the love of god.
       },
       PATCH: {
-        "/incrementUserRequests": this.incrementUserRequests.bind(this),
+        "/incrementUserRequests": this.incrementUserRequests.bind(this), //TODO: I don't think we need this anymore. we're using aggregate functions to get the number of requests.
         "/updateRole/:id": this.updateUserRole.bind(this),
       },
       DELETE: {
