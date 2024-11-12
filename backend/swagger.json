@@ -1,0 +1,196 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Moodzic API",
+    "description": "API documentation for Moodzic",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "schemes": ["http"],
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT authorization header using the Bearer scheme."
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "summary": "Register a new user",
+        "description": "Creates a new user account with an email and password.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string" },
+                "password": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { "description": "User created successfully." },
+          "400": { "description": "User already exists." },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "summary": "Login a user",
+        "description": "Logs in a user with an email and password.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string" },
+                "password": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "User logged in successfully." },
+          "400": { "description": "User not found" },
+          "401": { "description": "Invalid credentials" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/requestPasswordReset": {
+      "post": {
+        "summary": "Request a password reset",
+        "description": "Sends an email to the user with a reset code to reset their password.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Password reset email sent." },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/resetPassword": {
+      "post": {
+        "summary": "Reset a user's password",
+        "description": "Resets a user's password with a reset code and new password.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string" },
+                "resetCode": { "type": "string" },
+                "newPassword": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Password reset successfully." },
+          "400": { "description": "Invalid reset code or code expired" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/getAllUsersData": {
+      "get": {
+        "summary": "Get all users data",
+        "description": "Currently returns the num of requests per user.",
+        "security": [{ "Bearer": [] }],
+        "responses": {
+          "200": { "description": "Users data returned successfully." },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/getUserNumberOfRequests": {
+      "get": {
+        "summary": "Get number of requests for a user",
+        "description": "Returns the number of requests made by a user.",
+        "security": [{ "Bearer": [] }],
+        "responses": {
+          "200": { "description": "Number of requests returned successfully." },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/updateRole/{id}": {
+      "patch": {
+        "summary": "Update user role",
+        "description": "Updates the role of a user. Must be done by an admin.",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "User role updated successfully." },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/delete/{id}": {
+      "delete": {
+        "summary": "Delete a user",
+        "description": "Deletes a user account. Must be done by an admin.",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "User deleted successfully." },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error." }
+        }
+      }
+    }
+  }
+}

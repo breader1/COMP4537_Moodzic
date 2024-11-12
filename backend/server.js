@@ -13,6 +13,10 @@ const db = require("./database/database");
 const nodemailer = require("nodemailer");
 const messages = require("./localization/en/user.js");
 
+const path = require("path");
+const fs = require("fs");
+const swaggerUiPath = path.join(__dirname, "swagger-ui-dist");
+
 const CORS_ORIGIN_URL = messages.server.cors.allow_origin.dev;
 const CORS_METHODS = messages.server.cors.allow_methods;
 const CORS_HEADERS = messages.server.cors.allow_headers;
@@ -38,14 +42,20 @@ class Server {
         "/resetPassword": this.resetPassword.bind(this),
       },
       GET: {
-        "/getAllUsersData": this.getAllUsersData.bind(this),
-        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this), //TODO: move the requests to the requests table
-        //get numer of endpoint called overall
+        "/getAllUsersData": this.getAllUsersData.bind(this), //TODO: rename this - update logic to get email, total number of HTTP requests including LLM Requests.
+        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this), //TODO: move the requests to the requests table //rename this to getUserNumberOfLLMRequests
+        "/api-docs": this.serveSwaggerUI.bind(this), // Serve Swagger UI on /api-docs
+        "/swagger.json": this.serveSwaggerJSON.bind(this), // Serve Swagger JSON on /swagger.json
+        //get number of endpoints called by the endpoint url
+        //meaning /login has been called 10 times, and the http method is POST
+        //Method     Endpoint       Number of Requests
+        //POST       /login         10
 
         //get numer of endpoint called by user
+        //This is the first GET endpoint - think of a better name for this please for the love of god.
       },
       PATCH: {
-        "/incrementUserRequests": this.incrementUserRequests.bind(this),
+        "/incrementUserRequests": this.incrementUserRequests.bind(this), //TODO: I don't think we need this anymore. we're using aggregate functions to get the number of requests.
         "/updateRole/:id": this.updateUserRole.bind(this),
       },
       DELETE: {
@@ -60,6 +70,55 @@ class Server {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
       },
+    });
+  }
+
+  serveSwaggerJSON(req, res) {
+    const filePath = path.join(__dirname, "swagger.json");
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Swagger JSON not found" }));
+      } else {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(data);
+      }
+    });
+  }
+
+  serveSwaggerUI(req, res) {
+    let filePath;
+
+    // Serve the main HTML file for Swagger UI
+    if (req.url === "/api-docs" || req.url === "/api-docs/") {
+      filePath = path.join(swaggerUiPath, "index.html");
+    } else {
+      // Serve asset files like CSS and JS by removing "/api-docs" prefix
+      const assetPath = req.url.replace("/api-docs", "");
+      filePath = path.join(swaggerUiPath, assetPath);
+    }
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404, { "Content-Type": "text/html" });
+        res.end("404 Not Found");
+        return;
+      }
+
+      // Set the appropriate content type based on file extension
+      const ext = path.extname(filePath);
+      const contentType =
+        {
+          ".html": "text/html",
+          ".css": "text/css",
+          ".js": "application/javascript",
+          ".png": "image/png",
+          ".svg": "image/svg+xml",
+          ".json": "application/json",
+        }[ext] || "text/plain";
+
+      res.writeHead(200, { "Content-Type": contentType });
+      res.end(data);
     });
   }
 
@@ -464,9 +523,7 @@ class Server {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
-        res.end(
-          JSON.stringify({ message: messages.server.auth.forbidden })
-        );
+        res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
         return;
       }
 
@@ -488,7 +545,10 @@ class Server {
 
       // Toggle the user's role
       const newRole = user.role === 1 ? 0 : 1;
-      await db.run(messages.database.queries.update.user_role_by_id, [newRole, id]);
+      await db.run(messages.database.queries.update.user_role_by_id, [
+        newRole,
+        id,
+      ]);
 
       // Send success response with the updated role
       res.writeHead(200, {
@@ -528,9 +588,7 @@ class Server {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
-        res.end(
-          JSON.stringify({ message: messages.server.auth.unauthorized })
-        );
+        res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
         return;
       }
 
@@ -615,6 +673,19 @@ class Server {
   async handleRequest(req, res) {
     // Set CORS headers for every request
     this.setCorsHeaders(res);
+
+    // Redirect `/api-docs` to `/api-docs/`
+    if (req.url === "/api-docs") {
+      res.writeHead(301, { Location: "/api-docs/" });
+      res.end();
+      return;
+    }
+
+    // Serve Swagger UI if the URL starts with `/api-docs/`
+    if (req.url.startsWith("/api-docs")) {
+      this.serveSwaggerUI(req, res);
+      return;
+    }
 
     const methodRoutes = this.routes[req.method];
     if (!methodRoutes) {
