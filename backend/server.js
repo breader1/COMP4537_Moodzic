@@ -673,6 +673,12 @@ class Server {
   async handleRequest(req, res) {
     // Set CORS headers for every request
     this.setCorsHeaders(res);
+    
+    // Handle preflight OPTIONS request
+    if (req.method === "OPTIONS") {
+      this.handleOptions(req, res);
+      return;
+    }
 
     // Redirect `/api-docs` to `/api-docs/`
     if (req.url === "/api-docs") {
