@@ -18,6 +18,7 @@ const serverEndpoints = {
   incrementUserRequests: "http://localhost:3000/incrementUserRequests",
   requestPasswordReset: "http://localhost:3000/requestPasswordReset",
   resetPassword: "http://localhost:3000/resetPassword",
+  updateRole: "http://localhost:3000/updateRole", // New endpoint
 };
 
 const llmEndpoint = {
