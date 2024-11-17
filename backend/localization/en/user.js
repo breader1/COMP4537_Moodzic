@@ -18,51 +18,139 @@ const messages = {
       closed_db: "Closed the database connection.",
       user_insert: "User with email '{email}' has been added to the database.",
       user_deleted: "User with id '{id}' has been deleted from the database.",
+      role_insert: "Role '{role_name}' has been added to the database.",
+      method_insert:
+        "HTTP Method '{method_name}' has been added to the database.",
+      endpoint_insert:
+        "Endpoint '{endpoint_name}' has been added to the database.",
+      request_insert: "Request has been added to the database.",
+      initialization: "Database has been initialized and seeded.",
     },
     warnings: {
       skipped_user_insert:
         "User with email '{email}' already exists. Skipping insertion.",
+      skipped_role_insert:
+        "Role '{role_name}' already exists. Skipping insertion.",
+      skipped_method_insert:
+        "HTTP Method '{method_name}' already exists. Skipping insertion",
+      skipped_endpoint_insert:
+        "Endpoint '{endpoint_name}' already exists. Skipping insertion.",
+      skipped_request_insert: "Request already exists. Skipping insertion.",
     },
     queries: {
       create: {
+        endpoint_table: `
+          CREATE TABLE IF NOT EXISTS Endpoint (
+            endpoint_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            method_id INTEGER NOT NULL,
+            endpoint_name TEXT NOT NULL,
+            FOREIGN KEY (method_id) REFERENCES Method(method_id)
+          );`,
+        method_table: `
+          CREATE TABLE IF NOT EXISTS Method (
+            method_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            method_name TEXT NOT NULL UNIQUE
+          );`,
+        role_table: `
+          CREATE TABLE IF NOT EXISTS Role (
+            role_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_name TEXT NOT NULL UNIQUE
+          );`,
         user_table: `
           CREATE TABLE IF NOT EXISTS User (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_id INTEGER NOT NULL,
             email TEXT NOT NULL UNIQUE,
-            number_of_requests INTEGER DEFAULT 0,
             password TEXT NOT NULL,
             salt TEXT NOT NULL,
-            role INTEGER DEFAULT 0,
             reset_code TEXT,
             reset_code_expiry DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            last_login DATETIME,
-            is_active BOOLEAN DEFAULT 1
-          )`,
+            is_active BOOLEAN DEFAULT 1,
+            FOREIGN KEY (role_id) REFERENCES Role(role_id)
+          );`,
         request_table: `
           CREATE TABLE IF NOT EXISTS Request (
-            service_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            prompt TEXT,
-            user_id INTEGER,
+            request_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            endpoint_id INTEGER NOT NULL,
+            status_code INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            is_active BOOLEAN DEFAULT 1,
-            description TEXT,
-            FOREIGN KEY (user_id) REFERENCES User(user_id)
-          )`,
+            FOREIGN KEY (user_id) REFERENCES User(user_id),
+            FOREIGN KEY (endpoint_id) REFERENCES Endpoint(endpoint_id)
+          );`,
       },
       insert: {
-        user: "INSERT INTO User (email, password, salt, role) VALUES (?, ?, ?, ?)",
+        user: "INSERT INTO User (role_id, email, password, salt) VALUES (?, ?, ?, ?)",
+        role: "INSERT INTO Role (role_name) VALUES (?)",
+        method: "INSERT INTO Method (method_name) VALUES (?)",
+        endpoint:
+          "INSERT INTO Endpoint (method_id, endpoint_name) VALUES (?, ?)",
+        request:
+          "INSERT INTO Request (user_id, endpoint_id, status_code) VALUES (?, ?, ?)",
       },
       select: {
+        endpoint_id_by_http_method: `
+          SELECT endpoint_id 
+            FROM Endpoint 
+            JOIN Method ON Endpoint.method_id = Method.method_id 
+            WHERE endpoint_name = ? AND method_name = ?;`,
         check_user_exists: "SELECT * FROM User WHERE email = ?",
         check_user_exists_by_id: "SELECT * FROM User WHERE user_id = ?",
-        all_users_requests: "SELECT email, number_of_requests FROM User",
+        check_role_exists: "SELECT * FROM Role WHERE role_name = ?",
+        check_role_exists_by_id: "SELECT * FROM Role WHERE role_id = ?",
+        check_method_exists: "SELECT * FROM Method WHERE method_name = ?",
+        check_method_exists_by_id: "SELECT * FROM Method WHERE method_id = ?",
+        check_endpoint_exists: "SELECT * FROM Endpoint WHERE endpoint_name = ?",
+        check_endpoint_exists_by_id:
+          "SELECT * FROM Endpoint WHERE endpoint_id = ?",
+        check_request_exists:
+          "SELECT * FROM Request WHERE user_id = ? AND endpoint_id = ?",
+        all_users_requests: `
+          SELECT 
+              User.user_id,
+              User.role_id,
+              User.email,
+              COUNT(Request.request_id) AS number_of_requests
+          FROM 
+              User
+          LEFT JOIN 
+              Request ON User.user_id = Request.user_id
+          GROUP BY 
+              User.user_id;`,
         num_user_requests:
           "SELECT number_of_requests FROM User WHERE user_id = ?",
         single_user_requests:
           "SELECT number_of_requests FROM User WHERE user_id = ?",
+        number_of_requests_by_endpoint: `
+            SELECT 
+                Method.method_name AS Method,
+                Endpoint.endpoint_name AS Endpoint,
+                COUNT(Request.request_id) AS NumberOfRequests
+            FROM 
+                Request
+            JOIN 
+                Endpoint ON Request.endpoint_id = Endpoint.endpoint_id
+            JOIN 
+                Method ON Endpoint.method_id = Method.method_id
+            GROUP BY 
+                Method.method_name, Endpoint.endpoint_name;
+        `,
+        number_of_endpoints_called_by_user: `
+          SELECT 
+            User.user_id,
+            Endpoint.endpoint_name AS Endpoint,
+            COUNT(Request.request_id) AS NumberOfRequests
+          FROM 
+            User
+          LEFT JOIN 
+            Request ON User.user_id = Request.user_id
+          LEFT JOIN 
+            Endpoint ON Request.endpoint_id = Endpoint.endpoint_id
+          GROUP BY 
+            User.user_id, Endpoint.endpoint_name;`,
       },
       update: {
         num_user_requests:
@@ -71,7 +159,7 @@ const messages = {
           "UPDATE User SET password = ?, salt = ?, reset_code = NULL, reset_code_expiry = NULL WHERE email = ?",
         user_reset_code:
           "UPDATE User SET reset_code = ?, reset_code_expiry = ? WHERE email = ?",
-        user_role_by_id: "UPDATE User SET role = ? WHERE user_id = ?",
+        user_role_by_id: "UPDATE User SET role_id = ? WHERE user_id = ?",
       },
       delete: {
         user_by_id: "DELETE FROM User WHERE user_id = ?",
@@ -105,6 +193,8 @@ const messages = {
       reset_code_expired: "Reset Code has expired.",
       route_not_found: "Route Not Found",
       user_not_found: "User Not Found",
+      llm_api_error: "Error with LLM API: ",
+      generate_audio: "Error generating audio",
     },
     success: {
       password_updated: "Password Updated Successfully",
@@ -118,7 +208,14 @@ const messages = {
         "All free tokens have been used up. Your requests will still be processed.",
       user_exists: "User already exists",
     },
+    http_methods: {
+      get: "GET",
+      post: "POST",
+      patch: "PATCH",
+      delete: "DELETE",
+    },
     port: 3000,
+    llm_endpoint: "https://fresh-insect-severely.ngrok-free.app/generate-audio",
   },
 };
 
