@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   try {
     // Make the request to get the number of API calls
-    const response = await fetch(serverEndpoints.getUserNumberOfRequests, {
+    const response = await fetch(serverEndpoints.getEndpointsCalledByUser, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -35,9 +35,19 @@ document.addEventListener("DOMContentLoaded", async function () {
       );
     }
 
-    // Display the number of requests
-    let message = userMessages.apiCallsInfo.replace("{number}", data.number_of_requests);
+    // Extract data for the `generate-audio` endpoint
+    const userEndpoints = result.data?.[0]?.Endpoints || [];
+    const generateAudioData = userEndpoints.find(
+      (endpoint) => endpoint.endpoint_name === "generate-audio"
+    );
 
+    let message;    
+    if (generateAudioData) {
+    // Display the number of requests
+      message = userMessages.apiCallsInfo.replace("{number}", data.number_of_requests);
+    } else {
+      message = userMessages.apiCallsNone;
+    }
     // Display additional message if available
     if (data.message) {
       message += `<br><span class="text-danger">${data.message}</span>`;
