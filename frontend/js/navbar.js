@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === "0") {
+  } else if (isLoggedIn && userRole === "1") {
     // Logged in as a regular user
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === "1") {
+  } else if (isLoggedIn && userRole === "2") {
     // Logged in as an admin
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">

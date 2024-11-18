@@ -18,11 +18,12 @@ const serverEndpoints = {
   incrementUserRequests: "http://localhost:3000/incrementUserRequests",
   requestPasswordReset: "http://localhost:3000/requestPasswordReset",
   resetPassword: "http://localhost:3000/resetPassword",
+  llm: "http://localhost:3000/generate-audio"
 };
 
-const llmEndpoint = {
-    llm: 'https://fresh-insect-severely.ngrok-free.app/generate-audio'
-}
+// const llmEndpoint = {
+//     llm: 'https://fresh-insect-severely.ngrok-free.app/generate-audio'
+// }
 
 const userMessages = {
     emailEmpty: "Please enter your email address.",

@@ -27,27 +27,32 @@ document.addEventListener("DOMContentLoaded", async function () {
       },
     });
 
-    const data = await response.json();
-
+    // Check response status before parsing JSON
     if (!response.ok) {
-      throw new Error(
-        data.message || userMessages.apiCallsError
-      );
+      const errorData = await response.json();
+      throw new Error(errorData.message || userMessages.apiCallsError);
     }
 
-    // Extract data for the `generate-audio` endpoint
-    const userEndpoints = result.data?.[0]?.Endpoints || [];
+    const data = await response.json();
+
+    // Extract the data array
+    const userData = data.data?.[0]; // Assumes the first item corresponds to the logged-in user
+    const userEndpoints = userData?.Endpoints || [];
+
+    // Find data for the `generate-audio` endpoint
     const generateAudioData = userEndpoints.find(
-      (endpoint) => endpoint.endpoint_name === "generate-audio"
+      (endpoint) => endpoint.endpoint_name === "/generate-audio"
     );
 
     let message;    
     if (generateAudioData) {
-    // Display the number of requests
-      message = userMessages.apiCallsInfo.replace("{number}", data.number_of_requests);
+      // Use the NumberOfRequests for the specific endpoint
+      message = userMessages.apiCallsInfo.replace("{number}", generateAudioData.NumberOfRequests);
     } else {
+      // No data for the endpoint
       message = userMessages.apiCallsNone;
     }
+
     // Display additional message if available
     if (data.message) {
       message += `<br><span class="text-danger">${data.message}</span>`;
