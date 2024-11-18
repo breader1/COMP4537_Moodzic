@@ -6,6 +6,8 @@
  * It also displays any additional messages returned by the server.
  */
 
+const MAX_FREE_CALLS = 20;
+
 document.addEventListener("DOMContentLoaded", async function () {
   // Retrieve token from sessionStorage
   const token = sessionStorage.getItem("token");
@@ -15,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "index.html";
   }
 
-  const apiCallsInfo = document.getElementById("apiCallsInfo");
+  const apiCallsInfoElement = document.getElementById("apiCallsInfo");
 
   try {
     // Make the request to get the number of API calls
@@ -44,23 +46,27 @@ document.addEventListener("DOMContentLoaded", async function () {
       (endpoint) => endpoint.endpoint_name === "/generate-audio"
     );
 
-    let message;    
     if (generateAudioData) {
-      // Use the NumberOfRequests for the specific endpoint
-      message = userMessages.apiCallsInfo.replace("{number}", generateAudioData.NumberOfRequests);
+      const numberOfRequests = generateAudioData.NumberOfRequests;
+
+      // Replace {number} in the constant string and set the innerHTML
+      const message = userMessages.apiCallsInfo.replace("{number}", numberOfRequests);
+
+      apiCallsInfoElement.innerHTML = message;
+
+      if (numberOfRequests >= MAX_FREE_CALLS) {
+        apiCallsInfoElement.style.color = "red";
+        const additionalMessage = document.createElement("p");
+        additionalMessage.textContent = userMessages.apiCallsExceeded;
+        additionalMessage.style.color = "red";
+        apiCallsInfoElement.appendChild(additionalMessage);
+      } else {
+        apiCallsInfoElement.style.color = "";
+      }
     } else {
-      // No data for the endpoint
-      message = userMessages.apiCallsNone;
+      apiCallsInfoElement.innerHTML = userMessages.apiCallsNone;
     }
-
-    // Display additional message if available
-    if (data.message) {
-      message += `<br><span class="text-danger">${data.message}</span>`;
-    }
-
-    apiCallsInfo.innerHTML = message;
   } catch (error) {
-    console.error("Error fetching user request data:", error);
-    apiCallsInfo.innerHTML = `<p class="text-danger">${userMessages.apiCallsError}</p>`;
+    apiCallsInfoElement.innerHTML = `<p class="text-danger">${userMessages.apiCallsError}</p>`;
   }
 });

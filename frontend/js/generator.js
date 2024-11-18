@@ -30,23 +30,19 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // Disable the submit button to prevent duplicate submissions
     submitButton.disabled = true;
 
-    // Clear previous audio display and set up "Generating audio..." animation
     let dotCount = 0;
     musicDisplay.innerHTML = `<p style="text-align: center;">${userMessages.generatingAudio}</p>`;
 
-    // Create a typing effect for the dots
     const typingInterval = setInterval(() => {
-      dotCount = (dotCount + 1) % 4; // Cycle between 0, 1, 2, and 3 dots
+      dotCount = (dotCount + 1) % 4;
       musicDisplay.innerHTML = `<p style="text-align: center;">${
         userMessages.generatingAudio
       }${".".repeat(dotCount)}</p>`;
     }, 500);
 
     try {
-      // Send the prompt to the server
       const response = await fetch(serverEndpoints.llm, {
         method: "POST",
         headers: {
@@ -54,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          prompt: promptText,
+          promptText: promptText,
           filename: "generated_audio",
         }),
       });
@@ -63,7 +59,6 @@ document.addEventListener("DOMContentLoaded", function () {
         throw new Error(userMessages.audioGenerationError);
       }
 
-      // Stop the typing animation once audio is ready
       clearInterval(typingInterval);
 
       // Convert the response to a Blob (for audio)
@@ -72,7 +67,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // Create an audio URL from the Blob
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      // Display the audio player
       musicDisplay.innerHTML = `
                 <p class="text-center fw-bold mt-3">Your Prompt: "${promptText}"</p>
                 <audio controls class="w-100 mt-3">
@@ -82,51 +76,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 <a href="${audioUrl}" download="generated_audio.wav" class="btn btn-primary w-100 mt-2">Download Audio</a>
             `;
 
-      // Call to increment the user's request count
-      // await incrementUserRequests();
     } catch (error) {
       clearInterval(typingInterval);
       musicDisplay.innerHTML = `<p class="text-danger">${userMessages.audioGenerationError}</p>`;
     } finally {
-      // Re-enable the submit button
       submitButton.disabled = false;
     }
 
-    // Optionally reset the form
     promptForm.reset();
   });
-
-  // Function to increment the user's number_of_requests
-  // async function incrementUserRequests() {
-  //   const token = sessionStorage.getItem("token");
-  //   const errorMessageElement = document.getElementById("errorMessage");
-
-  //   if (!token) {
-  //     errorMessageElement.textContent =
-  //       userMessages.incrementRequestCountAuthError;
-  //     return;
-  //   }
-
-  //   try {
-  //     const response = await fetch(serverEndpoints.incrementUserRequests, {
-  //       method: "PATCH",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     const data = await response.json();
-  //     if (!response.ok) {
-  //       throw new Error(
-  //         data.message || userMessages.incrementRequestCountError
-  //       );
-  //     }
-
-  //     // Clear any previous error message if the request is successful
-  //     errorMessageElement.textContent = "";
-  //   } catch (error) {
-  //     errorMessageElement.textContent = userMessages.incrementRequestCountError;
-  //   }
-  // }
 });
