@@ -14,15 +14,16 @@ const serverEndpoints = {
   register: "http://localhost:3000/register",
   login: "http://localhost:3000/login",
   getAllUsersData: "http://localhost:3000/getAllUsersData",
-  getUserNumberOfRequests: "http://localhost:3000/getUserNumberOfRequests",
+  getEndpointsCalledByUser: "http://localhost:3000/getEndpointsCalledByUser",
   incrementUserRequests: "http://localhost:3000/incrementUserRequests",
   requestPasswordReset: "http://localhost:3000/requestPasswordReset",
   resetPassword: "http://localhost:3000/resetPassword",
+  llm: "http://localhost:3000/generate-audio"
 };
 
-const llmEndpoint = {
-    llm: 'https://fresh-insect-severely.ngrok-free.app/generate-audio'
-}
+// const llmEndpoint = {
+//     llm: 'https://fresh-insect-severely.ngrok-free.app/generate-audio'
+// }
 
 const userMessages = {
     emailEmpty: "Please enter your email address.",
@@ -34,6 +35,8 @@ const userMessages = {
     passwordResetSuccess: "Your password has been reset successfully!",
     resetProcessError: "An error occurred. Please try again.",
     apiCallsInfo: "You have made {number} out of 20 free API calls.",
+    apiCallsExceeded: "All free tokens have been used up. Your requests will still be processed.",
+    apiCallsNone: "You have made 0 out of 20 free API calls.",
     apiCallsError: "Failed to retrieve API call information. Please try again later.",
     promptEmpty: "Please enter a prompt.",
     generatingAudio: "Generating audio",
