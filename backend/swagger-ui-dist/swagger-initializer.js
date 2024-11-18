@@ -6,6 +6,7 @@ window.onload = function() {
     url: "http://localhost:3000/swagger.json",
     dom_id: "#swagger-ui",
     deepLinking: true,
+    withCredentials: true,
     presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
     plugins: [SwaggerUIBundle.plugins.DownloadUrl],
     layout: "StandaloneLayout",

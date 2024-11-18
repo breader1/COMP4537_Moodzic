@@ -9,6 +9,7 @@ require("dotenv").config();
 const http = require("http");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const cookie = require("cookie");
 const db = require("./database/database");
 const nodemailer = require("nodemailer");
 const messages = require("./localization/en/user.js");
@@ -21,7 +22,6 @@ const CORS_ORIGIN_URL = messages.server.cors.allow_origin.dev;
 const CORS_METHODS = messages.server.cors.allow_methods;
 const CORS_HEADERS = messages.server.cors.allow_headers;
 const CORS_CONTENT_TYPE = messages.server.cors.allow_content_type;
-const MAX_API_CALLS = 20;
 
 const PORT = process.env.PORT || messages.server.port;
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -47,7 +47,8 @@ class Server {
         //Todo: update swagger config to be served from the hosted azure site when deployed to PRD
         "/api-docs": this.serveSwaggerUI.bind(this), //not tracked on purpose
         "/swagger.json": this.serveSwaggerJSON.bind(this), //not tracked on purpose
-        "/getNumberOfRequestsByEndpoint": this.getNumberOfRequestsByEndpoint.bind(this), 
+        "/getNumberOfRequestsByEndpoint":
+          this.getNumberOfRequestsByEndpoint.bind(this),
         "/getEndpointsCalledByUser": this.getEndpointsCalledByUser.bind(this),
       },
       PATCH: {
@@ -123,6 +124,7 @@ class Server {
       "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       "Access-Control-Allow-Methods": CORS_METHODS,
       "Access-Control-Allow-Headers": CORS_HEADERS,
+      "Access-Control-Allow-Credentials": "true", // Allow cookies
     });
     res.end();
   }
@@ -182,7 +184,11 @@ class Server {
         );
       }
     } finally {
-      await this.logRequest(req, logged_user_id, statusCode);
+      if (statusCode === 200) {
+        await this.logRequest(req, logged_user_id, statusCode);
+      } else {
+        console.log("Error generating audio");
+      }
     }
   }
 
@@ -299,6 +305,17 @@ class Server {
         JWT_SECRET,
         { expiresIn: "1h" }
       );
+      res.setHeader(
+        "Set-Cookie",
+        cookie.serialize("jwt", token, {
+          httpOnly: false, // Prevent access from JavaScript - false for localhost testing
+          maxAge: 3600, // Cookie expiry time (1 hour)
+          sameSite: "Lax", // Prevent CSRF in most cases
+          secure: false, // Set to true in production if using HTTPS
+          path: "/", // Cookie is valid for the entire site
+        })
+      );
+
       statusCode = 200;
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
@@ -884,6 +901,7 @@ class Server {
     res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN_URL);
     res.setHeader("Access-Control-Allow-Methods", CORS_METHODS);
     res.setHeader("Access-Control-Allow-Headers", CORS_HEADERS);
+    res.setHeader("Access-Control-Allow-Credentials", "true"); // Allow cookies
   }
 
   // Helper function to parse JSON body
@@ -910,30 +928,60 @@ class Server {
     return hash.digest("hex");
   }
 
-  // Middleware function to authenticate JWT token
   authenticateToken(req, res) {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    // Check for the JWT in cookies
+    const cookies = req.headers.cookie && cookie.parse(req.headers.cookie);
+    const token = cookies && cookies.jwt; // Look for 'jwt' cookie
+
+    // If no token is found, respond with 401 Unauthorized
     if (!token) {
       res.writeHead(401, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true",
       });
       res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
       return null;
     }
 
+    // Verify the token
     try {
       return jwt.verify(token, JWT_SECRET);
     } catch (err) {
       res.writeHead(403, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true",
       });
       res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
       return null;
     }
   }
+
+  // Middleware function to authenticate JWT token
+  // authenticateToken(req, res) {
+  //   const authHeader = req.headers["authorization"];
+  //   const token = authHeader && authHeader.split(" ")[1];
+  //   if (!token) {
+  //     res.writeHead(401, {
+  //       "Content-Type": CORS_CONTENT_TYPE,
+  //       "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+  //     });
+  //     res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
+  //     return null;
+  //   }
+
+  //   try {
+  //     return jwt.verify(token, JWT_SECRET);
+  //   } catch (err) {
+  //     res.writeHead(403, {
+  //       "Content-Type": CORS_CONTENT_TYPE,
+  //       "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+  //     });
+  //     res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
+  //     return null;
+  //   }
+  // }
 
   // Method: Send Reset Email
   async sendResetEmail(email, resetCode) {

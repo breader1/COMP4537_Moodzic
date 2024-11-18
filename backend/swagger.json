@@ -172,7 +172,7 @@
         "description": "Returns the number of requests made for each endpoint type, grouped by the HTTP method.",
         "security": [{ "Bearer": [] }],
         "responses": {
-          "200": { "description": "Data successfully retreieved." },
+          "200": { "description": "Data successfully retreived." },
           "403": { "description": "Forbidden" },
           "500": { "description": "Server error." }
         }
@@ -184,7 +184,7 @@
         "description": "Returns the number of requests made for each endpoint type, grouped by the HTTP method.",
         "security": [{ "Bearer": [] }],
         "responses": {
-          "200": { "description": "Data successfully retreieved." },
+          "200": { "description": "Data successfully retreived." },
           "401": { "description": "Unauthorized" },
           "403": { "description": "Forbidden" },
           "500": { "description": "Server error." }
