@@ -40,17 +40,17 @@ class Server {
         "/login": this.login.bind(this),
         "/requestPasswordReset": this.requestPasswordReset.bind(this),
         "/resetPassword": this.resetPassword.bind(this),
-        "/generate-audio": this.generateAudio.bind(this), //TODO: Add to SWAGGER
+        "/generate-audio": this.generateAudio.bind(this),
       },
       GET: {
         "/getAllUsersData": this.getAllUsersData.bind(this),
+        //Todo: update swagger config to be served from the hosted azure site when deployed to PRD
         "/api-docs": this.serveSwaggerUI.bind(this), //not tracked on purpose
         "/swagger.json": this.serveSwaggerJSON.bind(this), //not tracked on purpose
-        "/getNumberOfRequestsByEndpoint": this.getNumberOfRequestsByEndpoint.bind(this), //TODO: Add to SWAGGER
-        "/getEndpointsCalledByUser": this.getEndpointsCalledByUser.bind(this), //TODO: Add to SWAGGER
+        "/getNumberOfRequestsByEndpoint": this.getNumberOfRequestsByEndpoint.bind(this), 
+        "/getEndpointsCalledByUser": this.getEndpointsCalledByUser.bind(this),
       },
       PATCH: {
-        //TODO remove /incrementUserRequests from SWAGGER
         "/updateRole/:id": this.updateUserRole.bind(this),
       },
       DELETE: {
@@ -295,7 +295,7 @@ class Server {
       }
 
       const token = jwt.sign(
-        { user_id: user.user_id, role: user.role },
+        { user_id: user.user_id, role: user.role_id },
         JWT_SECRET,
         { expiresIn: "1h" }
       );
@@ -304,7 +304,7 @@ class Server {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
-      res.end(JSON.stringify({ token, email: user.email, role: user.role }));
+      res.end(JSON.stringify({ token, email: user.email, role: user.role_id }));
     } catch (error) {
       statusCode = 500;
       res.writeHead(statusCode, {
@@ -501,7 +501,7 @@ class Server {
       if (logged_user_id) {
         await this.logRequest(req, logged_user_id, statusCode);
       } else {
-        console.log("Get requested without Authentication");
+        console.log("User Data requested without Authentication");
       }
     }
   }
