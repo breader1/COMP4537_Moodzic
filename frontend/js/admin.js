@@ -1,10 +1,3 @@
-/**
- * ChatGPT was used in admin.js to help ask questions, generate code, and check for logic errors.
- * 
- * @fileoverview This code checks if a user is logged in by verifying a session token and, if authenticated,
- * fetches and displays user data in a table on the admin page.
- */
-
 document.addEventListener("DOMContentLoaded", () => {
   const token = sessionStorage.getItem("token");
 
@@ -15,11 +8,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const userRole = sessionStorage.getItem("role");
 
   if (userRole !== "1") {
-    alert(userMessages.notAuthorized);
     window.location.href = "home.html";
     return;
   }
 
+  fetchUsers(token);
+  fetchEndpoints(token);
+});
+
+// Fetch and display users
+function fetchUsers(token) {
   const apiUrl = serverEndpoints.getAllUsersData;
 
   fetch(apiUrl, {
@@ -38,10 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .catch((error) => {
       console.error("Error fetching user data:", error);
-      alert(userMessages.userDataFetchError);
+      displayPopup(userMessages.userDataFetchError, "error");
     });
+}
 
-  // Fetch the endpoints called by the user
+// Fetch and display endpoints
+function fetchEndpoints(token) {
   const endpointUrl = serverEndpoints.getNumberOfRequestsByEndpoint;
 
   fetch(endpointUrl, {
@@ -58,53 +58,51 @@ document.addEventListener("DOMContentLoaded", () => {
       return response.json();
     })
     .then((responseData) => {
-      // Access the 'data' field in the response object
       if (!Array.isArray(responseData.data)) {
         throw new Error("Response data is not an array.");
       }
       displayUserEndpoint(responseData.data);
     })
     .catch((error) => {
-      console.error("Error fetching user data:", error);
-      alert(userMessages.userDataFetchError);
+      console.error("Error fetching endpoint data:", error);
+      displayPopup(userMessages.userDataFetchError, "error");
     });
-});
-
+}
 
 // Display user data in a table
 function displayUserData(data) {
   if (!Array.isArray(data)) {
     console.error("Data is not an array:", data);
-    alert(userMessages.userDataFetchError);
+    displayPopup(userMessages.userDataFetchError, "error");
     return;
   }
 
-  const container = document.querySelector(".container");
+  const userContainer = document.querySelector(".userContainer");
+  userContainer.innerHTML = ""; // Clear existing content
 
-  // Add title for the user data table
   const title = document.createElement("h3");
   title.textContent = "User Data";
-  title.classList.add("table-title", "mt-4");
-  container.appendChild(title);
+  title.classList.add("table-title");
+  userContainer.appendChild(title);
 
   const table = document.createElement("table");
-  table.classList.add("table", "table-bordered", "mt-4");
+  table.classList.add("table", "table-bordered");
 
-  const headers = `<thead class="table-dark">
-                     <tr>
-                       <th>Email</th>
-                       <th>Total Requests</th>
-                       <th>Role</th>
-                       <th>Actions</th>
-                     </tr>
-                   </thead>`;
+  const headers = `
+    <thead class="table-dark">
+      <tr>
+        <th>Email</th>
+        <th>Total Requests</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>`;
   table.innerHTML = headers;
 
-  // Create a row for each user
   const tbody = document.createElement("tbody");
   data.forEach((user) => {
     const row = document.createElement("tr");
-    row.setAttribute("data-user-id", user.user_id); // Add data-user-id attribute
+    row.setAttribute("data-user-id", user.user_id);
 
     row.innerHTML = `
       <td>${user.email}</td>
@@ -125,29 +123,145 @@ function displayUserData(data) {
   });
 
   table.appendChild(tbody);
-  container.appendChild(table);
+  userContainer.appendChild(table);
 
-  // Add event listeners for role update buttons
-  document.querySelectorAll(".btn-update-role").forEach((button) => {
-    button.addEventListener("click", function () {
-      const userId = this.getAttribute("data-user-id");
+  addEventListenersToButtons();
+}
+
+function addEventListenersToButtons() {
+  const userContainer = document.querySelector(".userContainer");
+
+  // Delegate click events for update role buttons
+  userContainer.addEventListener("click", (event) => {
+    if (event.target.classList.contains("btn-update-role")) {
+      const userId = event.target.getAttribute("data-user-id");
       const roleSelect = document.querySelector(`select[data-user-id="${userId}"]`);
       const newRole = roleSelect.value;
-      updateUserRole(userId, newRole);
-    });
+      showUpdateConfirmation(userId, newRole);
+    }
   });
 
-  // Add event listeners for delete buttons
-  document.querySelectorAll(".btn-delete-user").forEach((button) => {
-    button.addEventListener("click", function () {
-      const userId = this.getAttribute("data-user-id");
-      if (confirm("Are you sure you want to delete this user?")) {
-        deleteUser(userId);
-      }
-    });
+  // Delegate click events for delete user buttons
+  userContainer.addEventListener("click", (event) => {
+    if (event.target.classList.contains("btn-delete-user")) {
+      const userId = event.target.getAttribute("data-user-id");
+      showDeleteConfirmation(userId);
+    }
   });
 }
 
+// Display endpoint data in a table
+function displayUserEndpoint(data) {
+  const endpointContainer = document.querySelector(".endpointContainer");
+  endpointContainer.innerHTML = ""; // Clear existing content
+
+  const title = document.createElement("h3");
+  title.textContent = "API Endpoint Total Requests";
+  title.classList.add("table-title");
+  endpointContainer.appendChild(title);
+
+  const table = document.createElement("table");
+  table.classList.add("table", "table-bordered");
+
+  const headers = `
+    <thead class="table-dark">
+      <tr>
+        <th>Method</th>
+        <th>Endpoint</th>
+        <th>Request</th>
+      </tr>
+    </thead>`;
+  table.innerHTML = headers;
+
+  const tbody = document.createElement("tbody");
+  data.forEach((endPoint) => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${endPoint.Method}</td>
+      <td>${endPoint.Endpoint}</td>
+      <td>${endPoint.NumberOfRequests}</td>
+    `;
+
+    tbody.appendChild(row);
+  });
+
+  table.appendChild(tbody);
+  endpointContainer.appendChild(table);
+}
+
+// Show delete confirmation modal
+function showDeleteConfirmation(userId) {
+  showModal(
+    "Are you sure you want to delete this user?",
+    "Delete User",
+    () => deleteUser(userId)
+  );
+}
+
+// Show update role confirmation modal
+function showUpdateConfirmation(userId, newRole) {
+  showModal(
+    `Are you sure you want to update this user's role to ${newRole === "1" ? "Admin" : "User"}?`,
+    "Update Role",
+    () => updateUserRole(userId, newRole)
+  );
+}
+
+// Display popup notification
+function displayPopup(message, type = "info") {
+  const popup = document.createElement("div");
+  popup.className = `popup-message ${type}`;
+  popup.textContent = message;
+  document.body.appendChild(popup);
+
+  setTimeout(() => {
+    popup.remove();
+  }, 3000);
+}
+
+function showModal(content, title, onConfirm) {
+  const existingModal = document.querySelector(".modal-backdrop");
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+
+  const modalContent = document.createElement("div");
+  modalContent.className = "modal-content";
+
+  modalContent.innerHTML = `
+    <h4>${title}</h4>
+    <p>${content}</p>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" id="confirmModalAction">Confirm</button>
+      <button class="btn btn-secondary" id="cancelModalAction">Cancel</button>
+    </div>
+  `;
+
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+
+  const confirmButton = document.getElementById("confirmModalAction");
+  const cancelButton = document.getElementById("cancelModalAction");
+
+  confirmButton.addEventListener("click", () => {
+    onConfirm();
+    closeModal(modal);
+  });
+
+  cancelButton.addEventListener("click", () => {
+    closeModal(modal);
+  });
+}
+
+
+// Close modal
+function closeModal(modal) {
+  modal.remove();
+}
 
 // Delete user function
 function deleteUser(userId) {
@@ -166,24 +280,15 @@ function deleteUser(userId) {
       }
       return response.json();
     })
-    .then((data) => {
-      if (data.message) {
-        alert(data.message);
-      } else {
-        alert("User deleted successfully.");
-        // Remove the user row from the table
-        const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
-        if (userRow) {
-          userRow.remove();
-        }
-      }
+    .then(() => {
+      displayPopup("User deleted successfully.", "success");
+      fetchUsers(token); // Refresh the user table
     })
     .catch((error) => {
       console.error("Error deleting user:", error);
-      alert("An error occurred while deleting the user.");
+      displayPopup("An error occurred while deleting the user.", "error");
     });
 }
-
 
 // Update user role function
 function updateUserRole(userId, newRole) {
@@ -198,62 +303,12 @@ function updateUserRole(userId, newRole) {
     body: JSON.stringify({ role: newRole }),
   })
     .then((response) => response.json())
-    .then((data) => {
-      if (data.message) {
-        alert(data.message);
-      } else {
-        alert("Role updated successfully.");
-      }
+    .then(() => {
+      displayPopup("Role updated successfully.", "success");
+      fetchUsers(token); // Refresh the user table
     })
     .catch((error) => {
       console.error("Error updating user role:", error);
-      alert("An error occurred while updating the role.");
+      displayPopup("An error occurred while updating the role.", "error");
     });
-}
-
-// Display user endpoint data in a table
-function displayUserEndpoint(data) {
-  console.log("Received data:", data); // Log the response data
-
-  if (!Array.isArray(data)) {
-    console.error("Data is not an array:", data);
-    alert("Unexpected response format. Please try again later.");
-    return;
-  }
-
-  const container = document.querySelector(".container");
-
-  // Add title for the endpoints table
-  const title = document.createElement("h3");
-  title.textContent = "API Endpoint Total Requests";
-  title.classList.add("table-title", "mt-4");
-  container.appendChild(title);
-
-  const table = document.createElement("table");
-  table.classList.add("table", "table-bordered", "mt-4");
-
-  const headers = `<thead class="table-dark">
-                       <tr>   
-                         <th>Method</th>
-                         <th>Endpoint</th>
-                         <th>Request</th>
-                       </tr>
-                     </thead>`;
-  table.innerHTML = headers;
-
-  const tbody = document.createElement("tbody");
-  data.forEach((endPoint) => {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${endPoint.Method}</td>
-      <td>${endPoint.Endpoint}</td>
-      <td>${endPoint.NumberOfRequests}</td>
-    `;
-
-    tbody.appendChild(row);
-  });
-
-  table.appendChild(tbody);
-  container.appendChild(table);
 }
