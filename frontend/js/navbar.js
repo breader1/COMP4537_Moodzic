@@ -6,6 +6,8 @@
  * and admins. It also handles user logout functionality.
  **/
 
+const ADMIN = "1";
+const USER = "2";
 
 document.addEventListener("DOMContentLoaded", function () {
   // Check login state from sessionStorage
@@ -26,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === "0") {
+  } else if (isLoggedIn && userRole === USER) {
     // Logged in as a regular user
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -49,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === "1") {
+  } else if (isLoggedIn && userRole === ADMIN) {
     // Logged in as an admin
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">

@@ -40,22 +40,17 @@ class Server {
         "/login": this.login.bind(this),
         "/requestPasswordReset": this.requestPasswordReset.bind(this),
         "/resetPassword": this.resetPassword.bind(this),
+        "/generate-audio": this.generateAudio.bind(this),
       },
       GET: {
-        "/getAllUsersData": this.getAllUsersData.bind(this), //TODO: rename this - update logic to get email, total number of HTTP requests including LLM Requests.
-        "/getUserNumberOfRequests": this.getUserNumberOfRequests.bind(this), //TODO: move the requests to the requests table //rename this to getUserNumberOfLLMRequests
-        "/api-docs": this.serveSwaggerUI.bind(this), // Serve Swagger UI on /api-docs
-        "/swagger.json": this.serveSwaggerJSON.bind(this), // Serve Swagger JSON on /swagger.json
-        //get number of endpoints called by the endpoint url
-        //meaning /login has been called 10 times, and the http method is POST
-        //Method     Endpoint       Number of Requests
-        //POST       /login         10
-
-        //get numer of endpoint called by user
-        //This is the first GET endpoint - think of a better name for this please for the love of god.
+        "/getAllUsersData": this.getAllUsersData.bind(this),
+        //Todo: update swagger config to be served from the hosted azure site when deployed to PRD
+        "/api-docs": this.serveSwaggerUI.bind(this), //not tracked on purpose
+        "/swagger.json": this.serveSwaggerJSON.bind(this), //not tracked on purpose
+        "/getNumberOfRequestsByEndpoint": this.getNumberOfRequestsByEndpoint.bind(this), 
+        "/getEndpointsCalledByUser": this.getEndpointsCalledByUser.bind(this),
       },
       PATCH: {
-        "/incrementUserRequests": this.incrementUserRequests.bind(this), //TODO: I don't think we need this anymore. we're using aggregate functions to get the number of requests.
         "/updateRole/:id": this.updateUserRole.bind(this),
       },
       DELETE: {
@@ -133,7 +128,67 @@ class Server {
   }
 
   //----------POST-----------
+  async generateAudio(req, res) {
+    const decoded = this.authenticateToken(req, res);
+    if (!decoded) return;
+    const logged_user_id = decoded.user_id;
+    let statusCode = 200;
+
+    try {
+      // Parse the JSON body from the request
+      const { promptText } = await this.parseJSONBody(req);
+
+      // Send a POST request to the LLM API with the prompt
+      const llmResponse = await fetch(messages.server.llm_endpoint, {
+        method: messages.server.http_methods.post,
+        headers: {
+          "Content-Type": CORS_CONTENT_TYPE,
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          filename: "generated_audio",
+        }),
+      });
+
+      // Check if the LLM API responded successfully
+      if (!llmResponse.ok) {
+        throw new Error(
+          `${messages.server.errors.llm_api_error} ${llmResponse.statusText}`
+        );
+      }
+
+      // Buffer the response data
+      const arrayBuffer = await llmResponse.arrayBuffer();
+      const audioData = Buffer.from(arrayBuffer);
+
+      // Set headers and send the buffered data back to the frontend
+      res.writeHead(statusCode, {
+        "Content-Type": "audio/wav",
+        "Content-Disposition": "attachment; filename=generated_audio.wav",
+      });
+      res.end(audioData);
+    } catch (error) {
+      statusCode = 500;
+      if (!res.headersSent) {
+        res.writeHead(statusCode, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(
+          JSON.stringify({
+            message: messages.server.errors.generate_audio,
+            error: error.message,
+          })
+        );
+      }
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
+    }
+  }
+
   async register(req, res) {
+    let statusCode = 400;
+    let logged_user_id = null;
     try {
       const { email, password } = await this.parseJSONBody(req);
 
@@ -141,8 +196,9 @@ class Server {
         messages.database.queries.select.check_user_exists,
         [email]
       );
+      logged_user_id = existingUser ? existingUser.user_id : null;
       if (existingUser) {
-        res.writeHead(400, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -158,12 +214,20 @@ class Server {
       const hashedPassword = this.hashPassword(password, salt);
 
       await db.run(messages.database.queries.insert.user, [
+        2, // Default role is 2 (user)
         email,
         hashedPassword,
         salt,
-        0,
       ]);
-      res.writeHead(201, {
+
+      // Retrieve the newly created user's ID
+      const newUser = await db.get(
+        messages.database.queries.select.check_user_exists,
+        [email]
+      );
+      logged_user_id = newUser.user_id;
+      statusCode = 201;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -173,7 +237,8 @@ class Server {
         })
       );
     } catch (error) {
-      res.writeHead(500, {
+      statusCode = 500;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -183,10 +248,14 @@ class Server {
           error: error.message,
         })
       );
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
     }
   }
 
   async login(req, res) {
+    let statusCode = 400;
+    let logged_user_id = null;
     try {
       const { email, password } = await this.parseJSONBody(req);
 
@@ -195,8 +264,10 @@ class Server {
         [email]
       );
 
+      logged_user_id = user.user_id;
+
       if (!user) {
-        res.writeHead(400, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -210,7 +281,8 @@ class Server {
 
       const hashedPassword = this.hashPassword(password, user.salt);
       if (hashedPassword !== user.password) {
-        res.writeHead(401, {
+        statusCode = 401;
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -223,18 +295,19 @@ class Server {
       }
 
       const token = jwt.sign(
-        { user_id: user.user_id, role: user.role },
+        { user_id: user.user_id, role: user.role_id },
         JWT_SECRET,
         { expiresIn: "1h" }
       );
-
-      res.writeHead(200, {
+      statusCode = 200;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
-      res.end(JSON.stringify({ token, email: user.email, role: user.role }));
+      res.end(JSON.stringify({ token, email: user.email, role: user.role_id }));
     } catch (error) {
-      res.writeHead(500, {
+      statusCode = 500;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -244,10 +317,14 @@ class Server {
           error: error.message,
         })
       );
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
     }
   }
 
   async requestPasswordReset(req, res) {
+    let statusCode = 404;
+    let logged_user_id = null;
     try {
       const { email } = await this.parseJSONBody(req);
 
@@ -255,8 +332,9 @@ class Server {
         messages.database.queries.select.check_user_exists,
         [email]
       );
+      logged_user_id = user.user_id;
       if (!user) {
-        res.writeHead(404, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -278,8 +356,8 @@ class Server {
       ]);
 
       await this.sendResetEmail(email, resetCode);
-
-      res.writeHead(200, {
+      statusCode = 200;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -289,7 +367,8 @@ class Server {
         })
       );
     } catch (error) {
-      res.writeHead(500, {
+      statusCode = 500;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -299,10 +378,14 @@ class Server {
           error: error.message,
         })
       );
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
     }
   }
 
   async resetPassword(req, res) {
+    let statusCode = 400;
+    let logged_user_id = null;
     try {
       const { email, resetCode, newPassword } = await this.parseJSONBody(req);
 
@@ -310,8 +393,9 @@ class Server {
         messages.database.queries.select.check_user_exists,
         [email]
       );
+      logged_user_id = user.user_id;
       if (!user || user.reset_code !== resetCode) {
-        res.writeHead(400, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -325,7 +409,7 @@ class Server {
 
       const now = new Date();
       if (new Date(user.reset_code_expiry) < now) {
-        res.writeHead(400, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -345,8 +429,8 @@ class Server {
         salt,
         email,
       ]);
-
-      res.writeHead(200, {
+      statusCode = 200;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -356,7 +440,8 @@ class Server {
         })
       );
     } catch (error) {
-      res.writeHead(500, {
+      statusCode = 500;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -366,26 +451,43 @@ class Server {
           error: error.message,
         })
       );
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
     }
   }
 
   //----------GET-----------
   async getAllUsersData(req, res) {
     const decoded = this.authenticateToken(req, res);
+    let statusCode = 200;
     if (!decoded) return;
+    const logged_user_id = decoded.user_id;
 
     try {
+      // Check if the requesting user is an admin
+      const isAdmin = await this.isAdmin(req, res);
+      if (!isAdmin) {
+        statusCode = 403;
+        res.writeHead(statusCode, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
+        return;
+      }
+
       const users = await db.getAll(
         messages.database.queries.select.all_users_requests
       );
 
-      res.writeHead(200, {
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify(users));
     } catch (error) {
-      res.writeHead(500, {
+      statusCode = 500;
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -395,131 +497,136 @@ class Server {
           error: error.message,
         })
       );
-    }
-  }
-
-  async getUserNumberOfRequests(req, res) {
-    const decoded = this.authenticateToken(req, res);
-    if (!decoded) return;
-
-    try {
-      const user = await db.get(
-        messages.database.queries.select.single_user_requests,
-        [decoded.user_id]
-      );
-
-      if (!user) {
-        res.writeHead(404, {
-          "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-        });
-        res.end(
-          JSON.stringify({
-            message: messages.server.errors.user_not_found,
-          })
-        );
-        return;
-      }
-
-      if (user.number_of_requests >= MAX_API_CALLS) {
-        res.writeHead(200, {
-          "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-        });
-        res.end(
-          JSON.stringify({
-            message: messages.server.warnings.usage_exceeded,
-            number_of_requests: user.number_of_requests,
-          })
-        );
+    } finally {
+      if (logged_user_id) {
+        await this.logRequest(req, logged_user_id, statusCode);
       } else {
-        res.writeHead(200, {
-          "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-        });
-        res.end(
-          JSON.stringify({
-            number_of_requests: user.number_of_requests,
-          })
-        );
+        console.log("User Data requested without Authentication");
       }
-    } catch (error) {
-      res.writeHead(500, {
-        "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-      });
-      res.end(
-        JSON.stringify({
-          message: messages.server.errors.generic_500,
-          error: error.message,
-        })
-      );
     }
   }
 
-  //----------PATCH-----------
-  async incrementUserRequests(req, res) {
-    // Authenticate the user
+  async getNumberOfRequestsByEndpoint(req, res) {
     const decoded = this.authenticateToken(req, res);
+    let statusCode = 200;
     if (!decoded) return;
 
-    try {
-      // Get the user's current number_of_requests from the database
-      const user = await db.get(
-        messages.database.queries.select.num_user_requests,
-        [decoded.user_id]
-      );
+    const logged_user_id = decoded.user_id;
 
-      if (!user) {
-        res.writeHead(404, {
-          "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-        });
-        res.end(
-          JSON.stringify({ message: messages.server.errors.user_not_found })
-        );
-        return;
-      }
-
-      // Increment the user's number_of_requests by 1
-      const updatedRequests = user.number_of_requests + 1;
-      await db.run(messages.database.queries.update.num_user_requests, [
-        updatedRequests,
-        decoded.user_id,
-      ]);
-
-      // Return the updated number_of_requests
-      res.writeHead(200, {
-        "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-      });
-      res.end(
-        JSON.stringify({
-          message: messages.server.success.request_updated,
-          number_of_requests: updatedRequests,
-        })
-      );
-    } catch (error) {
-      res.writeHead(500, {
-        "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-      });
-      res.end(
-        JSON.stringify({
-          message: messages.server.errors.generic_500,
-          error: error.message,
-        })
-      );
-    }
-  }
-
-  async updateUserRole(req, res, params) {
-    const id = params.id;
     try {
       // Check if the requesting user is an admin
       const isAdmin = await this.isAdmin(req, res);
       if (!isAdmin) {
-        res.writeHead(403, {
+        statusCode = 403;
+        res.writeHead(statusCode, {
+          "Content-Type": CORS_CONTENT_TYPE,
+          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        });
+        res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
+        return;
+      }
+
+      // SQL query to get the number of requests by endpoint and method
+      const query =
+        messages.database.queries.select.number_of_requests_by_endpoint;
+
+      // Execute the query and retrieve results
+      const results = await db.getAll(query);
+
+      // Send response with the data
+      res.writeHead(statusCode, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(JSON.stringify({ data: results }));
+    } catch (error) {
+      statusCode = 500;
+      res.writeHead(statusCode, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(
+        JSON.stringify({
+          message: messages.server.errors.generic_500,
+          error: error.message,
+        })
+      );
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
+    }
+  }
+
+  async getEndpointsCalledByUser(req, res) {
+    const decoded = this.authenticateToken(req, res);
+    let statusCode = 200;
+    if (!decoded) return;
+    const logged_user_id = decoded.user_id;
+
+    try {
+      // SQL query to get the number of requests by user and endpoint
+      const query =
+        messages.database.queries.select.number_of_endpoints_called_by_user;
+
+      // Execute the query and retrieve results
+      const rows = await db.getAll(query);
+
+      // Organize data for the logged-in user by user_id with endpoints as an array
+      const result = rows
+        .filter((row) => row.user_id === decoded.user_id) // Filter rows for the logged-in user
+        .reduce((acc, row) => {
+          const user = acc.find((u) => u.user_id === row.user_id);
+          const endpointData = {
+            endpoint_name: row.Endpoint,
+            NumberOfRequests: row.NumberOfRequests,
+          };
+
+          if (user) {
+            // If user already exists in the result, add endpoint data to their array
+            user.Endpoints.push(endpointData);
+          } else {
+            // Otherwise, add a new user entry with an Endpoints array
+            acc.push({
+              user_id: row.user_id, // Use user_id instead of email
+              Endpoints: [endpointData],
+            });
+          }
+
+          return acc;
+        }, []);
+
+      // Send response with the formatted data
+      res.writeHead(statusCode, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(JSON.stringify({ data: result }));
+    } catch (error) {
+      statusCode = 500;
+      res.writeHead(statusCode, {
+        "Content-Type": CORS_CONTENT_TYPE,
+        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      });
+      res.end(
+        JSON.stringify({
+          message: messages.server.errors.generic_500,
+          error: error.message,
+        })
+      );
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
+    }
+  }
+
+  //----------PATCH-----------
+  async updateUserRole(req, res, params) {
+    const id = params.id;
+    const logged_user_id = this.authenticateToken(req, res).user_id;
+    let statusCode = 403;
+    try {
+      // Check if the requesting user is an admin
+      const isAdmin = await this.isAdmin(req, res);
+      if (!isAdmin) {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -533,7 +640,8 @@ class Server {
         [id]
       );
       if (!user) {
-        res.writeHead(404, {
+        statusCode = 404;
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -544,14 +652,14 @@ class Server {
       }
 
       // Toggle the user's role
-      const newRole = user.role === 1 ? 0 : 1;
+      const newRole = user.role_id === 2 ? 1 : 2;
       await db.run(messages.database.queries.update.user_role_by_id, [
         newRole,
         id,
       ]);
-
+      statusCode = 200;
       // Send success response with the updated role
-      res.writeHead(200, {
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
@@ -562,8 +670,9 @@ class Server {
         })
       );
     } catch (error) {
+      statusCode = 500;
       if (!res.headersSent) {
-        res.writeHead(500, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -574,17 +683,21 @@ class Server {
           })
         );
       }
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
     }
   }
 
   //----------DELETE-----------
   async deleteUser(req, res, params) {
     const id = params.id;
+    const logged_user_id = this.authenticateToken(req, res).user_id;
+    let statusCode = 403;
     try {
       // Check if the requesting user is an admin
       const isAdmin = await this.isAdmin(req, res);
       if (!isAdmin) {
-        res.writeHead(403, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -599,7 +712,8 @@ class Server {
       );
 
       if (!userToDelete) {
-        res.writeHead(404, {
+        statusCode = 404;
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -620,15 +734,17 @@ class Server {
         ? messages.server.success.user_deleted.replace("{id}", id)
         : `User with ID ${id} has been deleted successfully.`;
 
+      statusCode = 200;
       // Send success response
-      res.writeHead(200, {
+      res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify({ message: successMessage }));
     } catch (error) {
+      statusCode = 500;
       if (!res.headersSent) {
-        res.writeHead(500, {
+        res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
@@ -639,6 +755,51 @@ class Server {
           })
         );
       }
+    } finally {
+      await this.logRequest(req, logged_user_id, statusCode);
+    }
+  }
+
+  //----------SERVER-----------
+  extractBasePath(url) {
+    // Split the URL by '/' and only keep the static parts
+    const parts = url.split("/");
+    const basePath = parts.slice(0, 2).join("/"); // Keeps only the first two parts, e.g., "/delete"
+
+    return basePath;
+  }
+
+  async logRequest(req, userId, statusCode) {
+    console.log("Logging request...");
+    try {
+      // const endpointPath = req.url;
+      const endpointPath = this.extractBasePath(req.url);
+      const method = req.method;
+
+      const endpoint = await db.get(
+        messages.database.queries.select.endpoint_id_by_http_method,
+        [endpointPath, method]
+      );
+
+      if (!endpoint) {
+        console.error(
+          `Endpoint not found for path ${endpointPath} and method ${method}`
+        );
+        return;
+      }
+
+      // Log the request with the user ID, endpoint ID, and status code
+      await db.run(messages.database.queries.insert.request, [
+        userId,
+        endpoint.endpoint_id,
+        statusCode,
+      ]);
+
+      console.log(
+        `Logged request: user_id=${userId}, endpoint_id=${endpoint.endpoint_id}, status_code=${statusCode}`
+      );
+    } catch (error) {
+      console.error("Error logging request:", error);
     }
   }
 
@@ -673,7 +834,7 @@ class Server {
   async handleRequest(req, res) {
     // Set CORS headers for every request
     this.setCorsHeaders(res);
-    
+
     // Handle preflight OPTIONS request
     if (req.method === "OPTIONS") {
       this.handleOptions(req, res);
@@ -810,7 +971,7 @@ class Server {
       messages.database.queries.select.check_user_exists_by_id,
       [decoded.user_id]
     );
-    return user && user.role === 1; // Return true if the user is found and has an admin role
+    return user && user.role_id === 1; // Return true if the user is found and has an admin role
   }
 }
 
