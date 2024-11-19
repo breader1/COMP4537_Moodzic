@@ -100,6 +100,7 @@ function displayUserData(data) {
                    </thead>`;
   table.innerHTML = headers;
 
+  // Create a row for each user
   const tbody = document.createElement("tbody");
   data.forEach((user) => {
     const row = document.createElement("tr");
