@@ -174,7 +174,7 @@ const messages = {
     cors: {
       allow_content_type: "application/json",
       allow_headers: "Content-Type, Authorization",
-      allow_methods: "GET, POST, OPTIONS, PATCH",
+      allow_methods: "GET, POST, OPTIONS, PATCH, DELETE",
       allow_origin: {
         dev: "http://localhost:8888",
         prod: "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
