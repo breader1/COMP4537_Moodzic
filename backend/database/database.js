@@ -7,71 +7,114 @@
 "use strict";
 
 const sqlite3 = require("sqlite3").verbose();
+const { STATUS_CODES } = require("http");
+const messages = require("../localization/en/user.js");
+
+const Role = {
+  Admin: 1,
+  User: 2,
+};
+
+const Method = {
+  GET: 1,
+  POST: 2,
+  PATCH: 3,
+  DELETE: 4,
+};
 
 class Database {
   constructor(dbFilePath = ":memory:") {
     this.db = new sqlite3.Database(dbFilePath, (err) => {
       if (err) {
-        console.error("Could not connect to database:", err);
+        console.error(messages.database.errors.connection, err);
       } else {
-        console.log("Connected to the SQLite database.");
+        console.log(messages.database.success.connection);
       }
     });
   }
 
   // Initialize tables
-  initializeTables() {
-    this.createUserTable();
-    this.createServiceTable();
-    this.seedUserTable();
+  async initializeTables() {
+    try {
+      await this.createUserTable();
+      console.log("User table created");
+
+      await this.createRequestTable();
+      console.log("Request table created");
+
+      await this.createRoleTable();
+      console.log("Role table created");
+
+      await this.createMethodTable();
+      console.log("Method table created");
+
+      await this.createEndpointTable();
+      console.log("Endpoint table created");
+
+      await this.seedRoleTable();
+      console.log("Role table seeded");
+
+      await this.seedUserTable();
+      console.log("User table seeded");
+
+      await this.seedMethodTable();
+      console.log("Method table seeded");
+
+      await this.seedEndpointTable();
+      console.log("Endpoint table seeded");
+
+      await this.seedRequestTable();
+      console.log("Request table seeded");
+
+      console.log(messages.database.success.initialization);
+    } catch (err) {
+      console.error(messages.database.errors.table_creation, err);
+    }
   }
 
-  createUserTable() {
-    const sql = `
-        CREATE TABLE IF NOT EXISTS User (
-            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL UNIQUE,
-            number_of_requests INTEGER DEFAULT 0,
-            password TEXT NOT NULL,
-            salt TEXT NOT NULL,
-            role INTEGER DEFAULT 0,
-            reset_code TEXT,                      
-            reset_code_expiry DATETIME,           
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            last_login DATETIME,
-            is_active BOOLEAN DEFAULT 1
-        )
-    `;
-    this.run(sql);
+  async createUserTable() {
+    const sql = messages.database.queries.create.user_table;
+    await this.run(sql);
   }
 
-  createServiceTable() {
-    const sql = `
-            CREATE TABLE IF NOT EXISTS Service (
-                service_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                prompt TEXT,
-                user_id INTEGER,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                is_active BOOLEAN DEFAULT 1,
-                description TEXT,
-                FOREIGN KEY (user_id) REFERENCES User(user_id)
-            )
-        `;
-    this.run(sql);
+  async createRequestTable() {
+    const sql = messages.database.queries.create.request_table;
+    await this.run(sql);
   }
 
-  seedUserTable() {
+  async createRoleTable() {
+    const sql = messages.database.queries.create.role_table;
+    await this.run(sql);
+  }
+
+  async createMethodTable() {
+    const sql = messages.database.queries.create.method_table;
+    await this.run(sql);
+  }
+
+  async createEndpointTable() {
+    const sql = messages.database.queries.create.endpoint_table;
+    await this.run(sql);
+  }
+
+  async seedUserTable() {
     const users = [
-      { email: "john@john.com", password: "123", role: 0 },
-      { email: "admin@admin.com", password: "111", role: 1 },
+      {
+        email: messages.database.admin_user_email,
+        password: messages.database.admin_user_password,
+        role: Role.Admin, // role_id 1 is Admin
+      },
+      {
+        email: messages.database.default_user_email,
+        password: messages.database.default_user_password,
+        role: Role.User, // role_id 2 is User
+      },
     ];
 
-    users.forEach(async (user) => {
+    for (const user of users) {
       // Check if user already exists
       const existingUser = await this.get(
-        "SELECT * FROM User WHERE email = ?",
+        messages.database.queries.select.check_user_exists,
         [user.email]
       );
 
@@ -82,19 +125,226 @@ class Database {
         const hashedPassword = this.hashPassword(user.password, salt);
 
         // Insert the user into the database
-        await this.run(
-          "INSERT INTO User (email, password, salt, role) VALUES (?, ?, ?, ?)",
-          [user.email, hashedPassword, salt, user.role]
-        );
+        await this.run(messages.database.queries.insert.user, [
+          user.role,
+          user.email,
+          hashedPassword,
+          salt,
+        ]);
         console.log(
-          `User with email '${user.email}' has been added to the database.`
+          messages.database.success.user_insert.replace("{email}", user.email)
         );
       } else {
         console.log(
-          `User with email '${user.email}' already exists. Skipping insertion.`
+          messages.database.warnings.skipped_user_insert.replace(
+            "{email}",
+            user.email
+          )
         );
       }
-    });
+    }
+  }
+
+  // Seed Role Table
+  async seedRoleTable() {
+    const roles = [
+      {
+        role_name: "Admin",
+      },
+      {
+        role_name: "User",
+      },
+    ];
+
+    for (const role of roles) {
+      // Check if role already exists
+      const existingRole = await this.get(
+        messages.database.queries.select.check_role_exists,
+        [role.role_name]
+      );
+
+      if (!existingRole) {
+        // Insert the role into the database
+        await this.run(messages.database.queries.insert.role, [role.role_name]);
+        console.log(
+          messages.database.success.role_insert.replace(
+            "{role_name}",
+            role.role_name
+          )
+        );
+      } else {
+        console.log(
+          messages.database.warnings.skipped_role_insert.replace(
+            "{role_name}",
+            role.role_name
+          )
+        );
+      }
+    }
+  }
+
+  // Seed Method Table
+  async seedMethodTable() {
+    const methods = [
+      {
+        method_name: "GET",
+      },
+      {
+        method_name: "POST",
+      },
+      {
+        method_name: "PATCH",
+      },
+      {
+        method_name: "DELETE",
+      },
+      // {
+      //   method_name: "OPTIONS", needed?
+      // }
+    ];
+
+    for (const method of methods) {
+      // Check if method already exists
+      const existingMethod = await this.get(
+        messages.database.queries.select.check_method_exists,
+        [method.method_name]
+      );
+
+      if (!existingMethod) {
+        // Insert the method into the database
+        await this.run(messages.database.queries.insert.method, [
+          method.method_name,
+        ]);
+        console.log(
+          messages.database.success.method_insert.replace(
+            "{method_name}",
+            method.method_name
+          )
+        );
+      } else {
+        console.log(
+          messages.database.warnings.skipped_method_insert.replace(
+            "{method_name}",
+            method.method_name
+          )
+        );
+      }
+    }
+  }
+
+  // Seed Endpoint Table
+  async seedEndpointTable() {
+    const endpoints = [
+      {
+        method_id: Method.GET, // method_id 1 is GET
+        endpoint_name: "/getAllUsersData",
+      },
+      {
+        method_id: Method.POST, // method_id 2 is POST
+        endpoint_name: "/register",
+      },
+      {
+        method_id: Method.POST,
+        endpoint_name: "/login",
+      },
+      {
+        method_id: Method.POST,
+        endpoint_name: "/requestPasswordReset",
+      },
+      {
+        method_id: Method.POST,
+        endpoint_name: "/resetPassword",
+      },
+      {
+        method_id: Method.PATCH, // method_id 3 is PATCH
+        endpoint_name: "/updateRole",
+      },
+      {
+        method_id: Method.DELETE, // method_id 4 is DELETE
+        endpoint_name: "/delete",
+      },
+      {
+        method_id: Method.GET,
+        endpoint_name: "/getNumberOfRequestsByEndpoint",
+      },
+      {
+        method_id: Method.GET,
+        endpoint_name: "/getEndpointsCalledByUser",
+      },
+      {
+        method_id: Method.POST,
+        endpoint_name: "/generate-audio",
+      },
+    ];
+
+    for (const endpoint of endpoints) {
+      // Check if endpoint already exists
+      const existingEndpoint = await this.get(
+        messages.database.queries.select.check_endpoint_exists,
+        [endpoint.endpoint_name]
+      );
+
+      if (!existingEndpoint) {
+        // Insert the endpoint into the database
+        await this.run(messages.database.queries.insert.endpoint, [
+          endpoint.method_id,
+          endpoint.endpoint_name,
+        ]);
+        console.log(
+          messages.database.success.endpoint_insert.replace(
+            "{endpoint_name}",
+            endpoint.endpoint_name
+          )
+        );
+      } else {
+        console.log(
+          messages.database.warnings.skipped_endpoint_insert.replace(
+            "{endpoint_name}",
+            endpoint.endpoint_name
+          )
+        );
+      }
+    }
+  }
+
+  async seedRequestTable() {
+    const requests = [
+      {
+        user_id: 1, 
+        endpoint_id: 1,
+        status_code: 900, // Custom status code for testing
+      },
+    ];
+
+    for (const request of requests) {
+      // Check if request already exists
+      const existingRequest = await this.get(
+        messages.database.queries.select.check_request_exists,
+        [request.user_id, request.endpoint_id]
+      );
+
+      if (!existingRequest) {
+        // Insert the request into the database
+        await this.run(messages.database.queries.insert.request, [
+          request.user_id,
+          request.endpoint_id,
+          request.status_code,
+        ]);
+        console.log(
+          messages.database.success.request_insert.replace(
+            "{user_id}",
+            request.user_id
+          )
+        );
+      } else {
+        console.log(
+          messages.database.warnings.skipped_request_insert.replace(
+            "{user_id}",
+            request.user_id
+          )
+        );
+      }
+    }
   }
 
   // Helper method to generate a random salt
@@ -115,7 +365,7 @@ class Database {
     return new Promise((resolve, reject) => {
       this.db.run(sql, params, function (err) {
         if (err) {
-          console.error("Error running SQL:", sql, err);
+          console.error(messages.database.errors.sql_execution, sql, err);
           reject(err);
         } else {
           resolve(this.lastID);
@@ -129,7 +379,7 @@ class Database {
     return new Promise((resolve, reject) => {
       this.db.all(sql, params, (err, rows) => {
         if (err) {
-          console.error("Error fetching rows:", sql, err);
+          console.error(messages.database.errors.fetch_all_rows, sql, err);
           reject(err);
         } else {
           resolve(rows);
@@ -143,7 +393,7 @@ class Database {
     return new Promise((resolve, reject) => {
       this.db.get(sql, params, (err, row) => {
         if (err) {
-          console.error("Error fetching row:", sql, err);
+          console.error(messages.database.errors.fetch_single_row, sql, err);
           reject(err);
         } else {
           resolve(row);
@@ -156,16 +406,14 @@ class Database {
   close() {
     this.db.close((err) => {
       if (err) {
-        console.error("Error closing the database:", err);
+        console.error(messages.database.errors.closing_db, err);
       } else {
-        console.log("Closed the database connection.");
+        console.log(messages.database.messages.closed_db);
       }
     });
   }
 }
 
-// Usage example:
-const db = new Database("moodzic.db");
-db.initializeTables();
+const db = new Database(messages.database.database_name);
 
 module.exports = db;

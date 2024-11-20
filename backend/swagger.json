@@ -1,0 +1,264 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Moodzic API",
+    "description": "API documentation for Moodzic",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/api-docs/v1"
+    }
+  ],
+  "tags":[
+    {
+      "name": "Moodzic Endpoints",
+      "description": "All endpoints used by Moodzic"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "auth-token"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "password": { "type": "string" }
+        }
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" }
+        }
+      },
+      "PasswordReset": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "resetCode": { "type": "string" },
+          "newPassword": { "type": "string" }
+        }
+      },
+      "Prompt": {
+        "type": "object",
+        "properties": {
+          "promptText": { "type": "string" }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      },
+      "Delete": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "cookieAuth": []
+    }
+  ],
+  "paths": {
+    "/getAllUsersData": {
+      "get": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Get all user data",
+        "description": "Returns all the users and the total number of api calls made by each user. ADMIN ONLY",
+        "responses": {
+          "200": { "description": "User data fetched successfully." },
+          "401": { "description": "Unauthorized." },
+          "403": { "description": "Forbidden." },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/getNumberOfRequestsByEndpoint": {
+      "get": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Get number of requests by endpoint",
+        "description": "This endpoint returns the number of requests made to each endpoint. Endpoints that have not been called will not appear in the response. ADMIN ONLY",
+        "responses": {
+          "200": { "description": "Endpoint data fetched successfully." },
+          "401": { "description": "Unauthorized." },
+          "403": { "description": "Forbidden." },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/getEndpointsCalledByUser": {
+      "get": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Requests made by logged in user",
+        "description": "Returns the number of requests made by the logged in user to each endpoint.",
+        "responses": {
+          "200": { "description": "Data fetched successfully." },
+          "401": { "description": "Unauthorized." },
+          "403": { "description": "Forbidden." },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Register a new user",
+        "description": "Creates a new user account with an email and password.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": { "description": "User created successfully." },
+          "400": { "description": "User already exists." },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Login a registered user",
+        "description": "Logs in a user with an email and password. The auth cookie is set on successful login.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "User logged in successfully." },
+          "400": { "description": "User not found" },
+          "401": { "description": "Invalid credentials" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/requestPasswordReset": {
+      "post": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Request a password reset",
+        "description": "Sends an email to the user with a reset code to reset their password.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordResetRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "Password reset email sent." },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/resetPassword": {
+      "post": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Reset a user's password",
+        "description": "Resets a user's password with a reset code and new password.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordReset" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully." },
+          "400": { "description": "Invalid reset code or code expired" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/generate-audio": {
+      "post": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Generate audio",
+        "description": "Send a text prompt to generate an audio file. Can take up to 60 seconds. Once finish, there is an option to download the audio file.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Prompt" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "Audio generated successfully." },
+          "400": { "description": "Invalid format" },
+          "500": { "description": "Server error. LLM most likely not running." }
+        }
+      }
+    },
+    "/updateRole/{id}": {
+      "patch": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Update user role by ID",
+        "description": "Update user role from user to admin or vice versa. Must be logged in and an admin to access this.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The ID of the user to update.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "User role updated successfully." },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error." }
+        }
+      }
+    },
+    "/delete/{id}": {
+      "delete": {
+        "tags": ["Moodzic Endpoints"],
+        "summary": "Delete user by ID",
+        "description": "Delete a user by ID. ADMIN ONLY",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The ID of the user to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "User successfully deleted." },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error." }
+        }
+      }
+    }
+  }
+}

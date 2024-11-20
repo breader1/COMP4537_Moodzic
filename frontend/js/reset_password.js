@@ -33,19 +33,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Validation checks
     if (!email) {
-      showValidationError(emailInput, "Please enter your email address.");
+      showValidationError(emailInput, userMessages.emailEmpty);
       isValid = false;
     }
     if (!resetCode) {
-      showValidationError(resetCodeInput, "Please enter the reset code.");
+      showValidationError(resetCodeInput, userMessages.resetCodeEmpty);
       isValid = false;
     }
     if (newPassword.length < 3) {
-      showValidationError(newPasswordInput, "Password must be at least 3 characters long.");
+      showValidationError(newPasswordInput, userMessages.passwordTooShort);
       isValid = false;
     }
     if (newPassword !== confirmPassword) {
-      showValidationError(confirmPasswordInput, "Passwords do not match.");
+      showValidationError(confirmPasswordInput, userMessages.passwordMismatch);
       isValid = false;
     }
 
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const result = await response.json();
 
         if (response.ok) {
-          showSuccessMessage(form, "Your password has been reset successfully!");
+          showSuccessMessage(form, userMessages.passwordResetSuccess);
           setTimeout(() => {
             form.reset();
             clearValidation(form);
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
           showValidationError(resetCodeInput, result.message);
         }
       } catch (error) {
-        showValidationError(resetCodeInput, "An error occurred. Please try again.");
+        showValidationError(resetCodeInput, userMessages.resetProcessError);
       }
     }
   });

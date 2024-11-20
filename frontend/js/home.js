@@ -6,46 +6,66 @@
  * It also displays any additional messages returned by the server.
  */
 
+const MAX_FREE_CALLS = 20;
+
 document.addEventListener("DOMContentLoaded", async function () {
-  // Retrieve token from sessionStorage
-  const token = sessionStorage.getItem("token");
+  const token = getCookie("jwt") !== null;
 
   // Redirect to index if not logged in
   if (!token) {
     window.location.href = "index.html";
   }
 
-  const apiCallsInfo = document.getElementById("apiCallsInfo");
+  const apiCallsInfoElement = document.getElementById("apiCallsInfo");
 
   try {
     // Make the request to get the number of API calls
-    const response = await fetch(serverEndpoints.getUserNumberOfRequests, {
+    const response = await fetch(serverEndpoints.getEndpointsCalledByUser, {
       method: "GET",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
 
+    // Check response status before parsing JSON
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || userMessages.apiCallsError);
+    }
+
     const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Failed to retrieve API call information."
-      );
+    // Extract the data array
+    const userData = data.data?.[0]; // Assumes the first item corresponds to the logged-in user
+    const userEndpoints = userData?.Endpoints || [];
+
+    // Find data for the `generate-audio` endpoint
+    const generateAudioData = userEndpoints.find(
+      (endpoint) => endpoint.endpoint_name === "/generate-audio"
+    );
+
+    if (generateAudioData) {
+      const numberOfRequests = generateAudioData.NumberOfRequests;
+
+      // Replace {number} in the constant string and set the innerHTML
+      const message = userMessages.apiCallsInfo.replace("{number}", numberOfRequests);
+
+      apiCallsInfoElement.innerHTML = message;
+
+      if (numberOfRequests >= MAX_FREE_CALLS) {
+        apiCallsInfoElement.style.color = "red";
+        const additionalMessage = document.createElement("p");
+        additionalMessage.textContent = userMessages.apiCallsExceeded;
+        additionalMessage.style.color = "red";
+        apiCallsInfoElement.appendChild(additionalMessage);
+      } else {
+        apiCallsInfoElement.style.color = "";
+      }
+    } else {
+      apiCallsInfoElement.innerHTML = userMessages.apiCallsNone;
     }
-
-    // Display the number of requests
-    let message = `You have made ${data.number_of_requests} out of 20 free API calls.`;
-
-    // Display additional message if available
-    if (data.message) {
-      message += `<br><span class="text-danger">${data.message}</span>`;
-    }
-
-    apiCallsInfo.innerHTML = message;
   } catch (error) {
-    console.error("Error fetching user request data:", error);
-    apiCallsInfo.innerHTML = `<p class="text-danger">Failed to retrieve API call information. Please try again later.</p>`;
+    apiCallsInfoElement.innerHTML = `<p class="text-danger">${userMessages.apiCallsError}</p>`;
   }
 });

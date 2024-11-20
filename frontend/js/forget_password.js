@@ -25,18 +25,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Frontend validation
         if (!email) {
-            showMessage("Please enter your email address.", "danger");
+            showMessage(userMessages.emailEmpty, "danger");
             return; // Stop execution if email is empty
         }
 
         if (!isValidEmail(email)) {
-            showMessage("Please enter a valid email address.", "danger");
+            showMessage(userMessages.emailInvalid, "danger");
             return; // Stop execution if email is invalid
         }
 
         // Proceed with API request if email is valid
         try {
-            const response = await fetch( serverEndpoints.requestPasswordReset, {
+            const response = await fetch(serverEndpoints.requestPasswordReset, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 showMessage(result.message, "danger");
             }
         } catch (error) {
-            showMessage("An error occurred while sending the reset link.", "danger");
+            showMessage(userMessages.resetLinkError, "danger");
         }
     });
 
