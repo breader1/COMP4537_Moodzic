@@ -8,9 +8,9 @@
  **/
 
 document.addEventListener("DOMContentLoaded", function () {
-  const token = sessionStorage.getItem("token");
 
-  // Redirect to index if not logged in
+  const token = getCookie("jwt") !== null;
+
   if (!token) {
     window.location.href = "index.html";
   }
@@ -45,9 +45,9 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const response = await fetch(serverEndpoints.llm, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           promptText: promptText,

@@ -1,6 +1,6 @@
 /**
  * ChatGPT was used in navbar.js to help ask questions, generate code, and check for logic errors.
- * 
+ *
  * @fileoverview This script dynamically generates a navigation bar based on the user's
  * authentication and role, providing distinct options for logged-out users, regular users,
  * and admins. It also handles user logout functionality.
@@ -10,13 +10,12 @@ const ADMIN = "1";
 const USER = "2";
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Check login state from sessionStorage
-  const isLoggedIn = sessionStorage.getItem("token") !== null;
-  const userRole = sessionStorage.getItem("role");
+  const token = getCookie("jwt") !== null; // Use getCookie from cookie.js
+  const role = sessionStorage.getItem("role");
 
   let navbarHtml;
 
-  if (!isLoggedIn) {
+  if (!token) {
     // Logged out navbar (default)
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -28,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === USER) {
+  } else if (role === USER) {
     // Logged in as a regular user
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -51,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === ADMIN) {
+  } else if (role === ADMIN) {
     // Logged in as an admin
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -83,14 +82,13 @@ document.addEventListener("DOMContentLoaded", function () {
   document.body.insertAdjacentHTML("afterbegin", navbarHtml);
 
   // Add event listener for Logout link if user is logged in
-  if (isLoggedIn) {
+  if (token) {
     const logoutLink = document.getElementById("logout-link");
     logoutLink.addEventListener("click", function (event) {
       event.preventDefault();
       // Clear login state and redirect to login page
-      sessionStorage.removeItem("token");
       sessionStorage.removeItem("role");
-      sessionStorage.removeItem("email");
+      document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       window.location.href = "index.html";
     });
   }

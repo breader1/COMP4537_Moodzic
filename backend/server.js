@@ -264,14 +264,12 @@ class Server {
     let logged_user_id = null;
     try {
       const { email, password } = await this.parseJSONBody(req);
-
+  
       const user = await db.get(
         messages.database.queries.select.check_user_exists,
         [email]
       );
-
-      logged_user_id = user.user_id;
-
+  
       if (!user) {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
@@ -284,7 +282,9 @@ class Server {
         );
         return;
       }
-
+  
+      logged_user_id = user.user_id;
+  
       const hashedPassword = this.hashPassword(password, user.salt);
       if (hashedPassword !== user.password) {
         statusCode = 401;
@@ -299,29 +299,37 @@ class Server {
         );
         return;
       }
-
+  
       const token = jwt.sign(
         { user_id: user.user_id, role: user.role_id },
         JWT_SECRET,
         { expiresIn: "1h" }
       );
+  
+      // Set the cookie
       res.setHeader(
         "Set-Cookie",
         cookie.serialize("jwt", token, {
-          httpOnly: false, // Prevent access from JavaScript - false for localhost testing
-          maxAge: 3600, // Cookie expiry time (1 hour)
-          sameSite: "Lax", // Prevent CSRF in most cases
-          secure: false, // Set to true in production if using HTTPS
-          path: "/", // Cookie is valid for the entire site
+          httpOnly: false, // Change this to true in production
+          maxAge: 3600,    // 1 hour
+          sameSite: "Lax",
+          secure: false,   // Set to true in production
+          path: "/",
         })
       );
-
+  
+      // Send the response body
       statusCode = 200;
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
-      res.end(JSON.stringify({ token, email: user.email, role: user.role_id }));
+      res.end(
+        JSON.stringify({
+          email: user.email,
+          role: user.role_id,
+        })
+      );
     } catch (error) {
       statusCode = 500;
       res.writeHead(statusCode, {
