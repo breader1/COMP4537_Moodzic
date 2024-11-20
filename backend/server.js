@@ -310,10 +310,10 @@ class Server {
       res.setHeader(
         "Set-Cookie",
         cookie.serialize("jwt", token, {
-          httpOnly: false, // Change this to true in production
+          httpOnly: true, // Change this to true in production
           maxAge: 3600,    // 1 hour
           sameSite: "Lax",
-          secure: false,   // Set to true in production
+          secure: true,   // Set to true in production
           path: "/",
         })
       );
