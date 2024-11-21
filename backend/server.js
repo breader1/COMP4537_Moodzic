@@ -315,7 +315,6 @@ class Server {
           sameSite: "None",
           secure: true,   
           path: "/",
-          domain: ".azurewebsites.net",
         })
       );
   
