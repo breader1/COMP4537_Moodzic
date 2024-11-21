@@ -319,7 +319,7 @@ class Server {
         cookie.serialize("jwt", token, {
           httpOnly: true, // Change this to true in production
           maxAge: 3600, // 1 hour
-          sameSite: "None",
+          sameSite: "Lax",
           secure: true,
           path: "/",
         })
