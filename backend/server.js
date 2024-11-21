@@ -313,7 +313,7 @@ class Server {
           httpOnly: true, // Change this to true in production
           maxAge: 3600,    // 1 hour
           sameSite: "Lax",
-          secure: true,   // Set to true in production
+          secure: false,   
           path: "/",
         })
       );
