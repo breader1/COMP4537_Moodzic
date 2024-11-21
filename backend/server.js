@@ -167,6 +167,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": "audio/wav",
         "Content-Disposition": "attachment; filename=generated_audio.wav",
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(audioData);
     } catch (error) {
@@ -175,6 +176,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -207,6 +209,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -236,6 +239,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -247,6 +251,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -274,6 +279,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -291,6 +297,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -323,6 +330,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -335,6 +343,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -362,6 +371,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -385,6 +395,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -396,6 +407,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -423,6 +435,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -437,6 +450,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -458,6 +472,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -469,6 +484,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -496,6 +512,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
         return;
@@ -508,6 +525,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(JSON.stringify(users));
     } catch (error) {
@@ -515,6 +533,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -546,6 +565,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
         return;
@@ -562,6 +582,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(JSON.stringify({ data: results }));
     } catch (error) {
@@ -569,6 +590,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -623,6 +645,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(JSON.stringify({ data: result }));
     } catch (error) {
@@ -630,6 +653,8 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
+        
       });
       res.end(
         JSON.stringify({
@@ -654,6 +679,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
         return;
@@ -669,6 +695,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({ message: messages.server.errors.user_not_found })
@@ -687,6 +714,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(
         JSON.stringify({
@@ -700,6 +728,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
@@ -725,6 +754,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
         return;
@@ -741,6 +771,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({ message: messages.server.errors.user_not_found })
@@ -764,6 +795,7 @@ class Server {
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
         "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        "Access-Control-Allow-Credentials": "true", // Allow cookies
       });
       res.end(JSON.stringify({ message: successMessage }));
     } catch (error) {
@@ -772,6 +804,7 @@ class Server {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
           "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          "Access-Control-Allow-Credentials": "true", // Allow cookies
         });
         res.end(
           JSON.stringify({
