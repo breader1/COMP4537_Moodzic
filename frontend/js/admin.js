@@ -1,12 +1,5 @@
-/**
- * ChatGPT was used in admin.js to help ask questions, generate code, and check for logic errors.
- * 
- * @fileoverview This code checks if a user is logged in by verifying a session token and, if authenticated,
- * fetches and displays user data in a table on the admin page.
- */
-
 document.addEventListener("DOMContentLoaded", () => {
-  const token = getCookie("jwt") !== null;
+  const token = sessionStorage.getItem("token");
 
   if (!token) {
     window.location.href = "index.html";
@@ -29,9 +22,9 @@ function fetchUsers(token) {
 
   fetch(apiUrl, {
     method: "GET",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => response.json())
@@ -53,9 +46,9 @@ function fetchEndpoints(token) {
 
   fetch(endpointUrl, {
     method: "GET",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => {
@@ -276,9 +269,9 @@ function deleteUser(userId) {
 
   fetch(`${serverEndpoints.deleteUser}/${userId}`, {
     method: "DELETE",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => {
@@ -303,9 +296,9 @@ function updateUserRole(userId, newRole) {
 
   fetch(`${serverEndpoints.updateRole}/${userId}`, {
     method: "PATCH",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ role: newRole }),
   })
