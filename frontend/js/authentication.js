@@ -137,9 +137,9 @@ document.addEventListener("DOMContentLoaded", function () {
             sessionStorage.setItem("role", body.role);
 
             // Wait briefly to allow the browser to process the cookie
-            // setTimeout(() => {
-            //   window.location.href = "home.html";
-            // }, 3000);
+            setTimeout(() => {
+              window.location.href = "home.html";
+            }, 3000);
           } else {
             // Login failed, display error message from backend
             if (body.message) {
