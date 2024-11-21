@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Wait briefly to allow the browser to process the cookie
             setTimeout(() => {
               window.location.href = "home.html";
-            }, 300);
+            }, 2000);
           } else {
             // Login failed, display error message from backend
             if (body.message) {
