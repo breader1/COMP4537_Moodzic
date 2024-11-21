@@ -315,6 +315,7 @@ class Server {
           sameSite: "None",
           secure: true,
           path: "/",
+          domain: ".canadacentral-01.azurewebsites.net",
         })
       );
   
