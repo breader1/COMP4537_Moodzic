@@ -10,24 +10,25 @@ const ADMIN = "1";
 const USER = "2";
 
 document.addEventListener("DOMContentLoaded", function () {
-  const token = getCookie("jwt") !== null; // Use getCookie from cookie.js
+  // const token = getCookie("jwt") !== null; // Use getCookie from cookie.js
   const role = sessionStorage.getItem("role");
 
   let navbarHtml;
 
-  if (!token) {
-    // Logged out navbar (default)
-    navbarHtml = `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="index.html">Moodzic</a>
-        <div class="d-flex">
-          <a class="nav-link text-white" href="authentication.html">Login/Register</a>
-        </div>
-      </div>
-    </nav>
-    `;
-  } else if (role === USER) {
+  // if (!token) {
+  //   // Logged out navbar (default)
+  //   navbarHtml = `
+  //   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  //     <div class="container-fluid">
+  //       <a class="navbar-brand" href="index.html">Moodzic</a>
+  //       <div class="d-flex">
+  //         <a class="nav-link text-white" href="authentication.html">Login/Register</a>
+  //       </div>
+  //     </div>
+  //   </nav>
+  //   `;
+  // } else 
+  if (role === USER) {
     // Logged in as a regular user
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -72,6 +73,17 @@ document.addEventListener("DOMContentLoaded", function () {
             </li>
           </ul>
           <a class="nav-link text-white" href="#" id="logout-link">Logout</a>
+        </div>
+      </div>
+    </nav>
+    `;
+  } else {
+    navbarHtml = `
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="index.html">Moodzic</a>
+        <div class="d-flex">
+          <a class="nav-link text-white" href="authentication.html">Login/Register</a>
         </div>
       </div>
     </nav>
