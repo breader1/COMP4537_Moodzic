@@ -33,16 +33,16 @@ const server = http.createServer((req, res) => {
     if (err) {
       if (err.code === 'ENOENT') {
         // File not found
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.setHeader(404, { "Content-Type": "text/plain" });
         res.end('404 Not Found');
       } else {
         // Server error
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.setHeader(500, { "Content-Type": "text/plain" });
         res.end('500 Internal Server Error');
       }
     } else {
       // Success
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.setHeader(200, { 'Content-Type': contentType });
       res.end(content, 'utf-8');
     }
   });

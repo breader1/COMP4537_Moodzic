@@ -317,9 +317,9 @@ class Server {
       res.setHeader(
         "Set-Cookie",
         cookie.serialize("jwt", token, {
-          httpOnly: false, // Change this to true in production
+          httpOnly: true, // Change this to true in production
           sameSite: "None",
-          secure: false,
+          secure: true,
           path: "/",
         })
       );
