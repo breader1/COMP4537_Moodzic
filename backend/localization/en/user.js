@@ -177,7 +177,7 @@ const messages = {
       allow_methods: "GET, POST, OPTIONS, PATCH, DELETE",
       allow_origin: {
         dev: "http://localhost:8888",
-        prod: "https://comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
+        prod: "https://mango-wave-08f7a541e.5.azurestaticapps.net/",
       },
     },
     email: {
