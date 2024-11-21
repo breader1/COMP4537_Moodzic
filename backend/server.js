@@ -311,10 +311,12 @@ class Server {
         "Set-Cookie",
         cookie.serialize("jwt", token, {
           httpOnly: true, // Change this to true in production
-          maxAge: 3600,    // 1 hour
-          sameSite: "None",
-          secure: true,   
+          maxAge: 3600, // 1 hour
+          sameSite: "Lax",
+          secure: true,
           path: "/",
+          domain:
+            "comp4537moodzicfrontend-b5c3a7hpddbjfeft.canadacentral-01.azurewebsites.net/",
         })
       );
   
