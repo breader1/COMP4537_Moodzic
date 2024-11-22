@@ -6,27 +6,25 @@
  * and admins. It also handles user logout functionality.
  **/
 
-const ADMIN = 1;
-const USER = 2;
 
 document.addEventListener("DOMContentLoaded", async function () {
   let isLoggedIn = false;
   let userRole = null;
-  // Make the request to get the number of API calls
-  const response = await fetch("http://localhost:3000/verify", {
+
+  const response = await fetch(serverEndpoints.verify, {
     method: "GET",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
   });
-  if (response.status === 200) {
+  if (response.status === statusCode.httpOk) {
     const data = await response.json(); // Parse the JSON response
     isLoggedIn = true;
-    if (data.Role === ADMIN) {
-      userRole = ADMIN;
+    if (data.Role === role.admin) {
+      userRole = role.admin;
     } else {
-      userRole = USER;
+      userRole = role.user;
     }
   }
 
@@ -44,7 +42,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === USER) {
+  } else if (isLoggedIn && userRole === role.user) {
     // Logged in as a regular user
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -67,7 +65,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === ADMIN) {
+  } else if (isLoggedIn && userRole === role.admin) {
     // Logged in as an admin
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -103,12 +101,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const logoutLink = document.getElementById("logout-link");
     logoutLink.addEventListener("click", function (event) {
       event.preventDefault();
-      fetch("http://localhost:3000/logout", {
+      fetch(serverEndpoints.logout, {
         method: "POST",
         credentials: "include", // Include the HttpOnly cookie
       })
         .then((response) => {
-          if (response.status === 200) {
+          if (response.status === statusCode.httpOk) {
             window.location.href = "index.html"; // Redirect to login or home page
           }
         })
