@@ -1,6 +1,10 @@
-const httpMethod = {
-    post: 'POST',
-    get: 'GET'
+const statusCode = {
+    httpOk: 200,
+}
+
+const role = {
+  admin: 1,
+  user: 2,
 }
 
 const serverEndpoints = {
@@ -18,19 +22,22 @@ const serverEndpoints = {
   // updateRole: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/updateRole", // New endpoint
   // llm: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/generate-audio",
   // deleteUser: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/delete",
+  // verify: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/verify",
+  // logout: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/logout",
 
   register: "http://localhost:3000/register",
   login: "http://localhost:3000/login",
   getAllUsersData: "http://localhost:3000/getAllUsersData",
   getEndpointsCalledByUser: "http://localhost:3000/getEndpointsCalledByUser",
-  getNumberOfRequestsByEndpoint:
-    "http://localhost:3000/getNumberOfRequestsByEndpoint",
+  getNumberOfRequestsByEndpoint: "http://localhost:3000/getNumberOfRequestsByEndpoint",
   incrementUserRequests: "http://localhost:3000/incrementUserRequests",
   requestPasswordReset: "http://localhost:3000/requestPasswordReset",
   resetPassword: "http://localhost:3000/resetPassword",
   updateRole: "http://localhost:3000/updateRole", // New endpoint
   llm: "http://localhost:3000/generate-audio",
   deleteUser: "http://localhost:3000/delete",
+  verify: "http://localhost:3000/verify",
+  logout: "http://localhost:3000/logout",
 };
 
 // const llmEndpoint = {

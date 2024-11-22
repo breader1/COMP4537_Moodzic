@@ -1,4 +1,28 @@
-document.addEventListener("DOMContentLoaded", () => {
+/**
+ * ChatGPT was used in admin.js to help ask questions, generate code, and check for logic errors.
+ * 
+ * @fileoverview This code checks if a user is logged in by verifying a session token and, if authenticated,
+ * fetches and displays user data in a table on the admin page.
+ */
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await fetch(serverEndpoints.verify, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+  .then(async (response) => {
+    if (response.status !== statusCode.httpOk) {
+      window.location.href = "index.html";
+    }
+    const data = await response.json();
+    if (data.Role !== role.admin) {
+      window.location.href = "home.html";
+    }
+  });
+
   fetchUsers();
   fetchEndpoints();
 });

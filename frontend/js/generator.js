@@ -7,7 +7,21 @@
  *
  **/
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+
+  await fetch(serverEndpoints.verify, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+  .then((response) => {
+    if (response.status !== statusCode.httpOk) {
+      window.location.href = "index.html";
+    }
+  });
+
   const promptForm = document.getElementById("promptForm");
   const promptInput = document.getElementById("promptInput");
   const musicDisplay = document.getElementById("musicDisplay");

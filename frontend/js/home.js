@@ -9,6 +9,21 @@
 const MAX_FREE_CALLS = 20;
 
 document.addEventListener("DOMContentLoaded", async function () {
+  
+  await fetch(serverEndpoints.verify, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+  .then((response) => {
+    if (response.status !== statusCode.httpOk) {
+      window.location.href = "index.html";
+    }
+  });
+
+  // Make the request to get the number of API calls
   const apiCallsInfoElement = document.getElementById("apiCallsInfo");
 
   try {
