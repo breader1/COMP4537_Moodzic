@@ -6,6 +6,8 @@
  * requests to the backend. Success or error messages are displayed based on server responses.
  */
 
+const MIN_PSWD_LENGTH = 3;
+
 function showForm(formType) {
   const loginFormContainer = document.getElementById("login-form");
   const registerFormContainer = document.getElementById("register-form");
@@ -46,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Password length validation
-    if (password.length < 3) {
+    if (password.length < MIN_PSWD_LENGTH) {
       showValidationError(registerPasswordInput, userMessages.passwordTooShort);
       isValid = false;
     }
