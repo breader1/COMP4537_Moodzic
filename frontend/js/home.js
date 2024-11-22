@@ -9,23 +9,15 @@
 const MAX_FREE_CALLS = 20;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Retrieve token from sessionStorage
-  const token = sessionStorage.getItem("token");
-
-  // Redirect to index if not logged in
-  if (!token) {
-    window.location.href = "index.html";
-  }
-
   const apiCallsInfoElement = document.getElementById("apiCallsInfo");
 
   try {
     // Make the request to get the number of API calls
     const response = await fetch(serverEndpoints.getEndpointsCalledByUser, {
       method: "GET",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
 

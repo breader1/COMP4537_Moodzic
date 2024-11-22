@@ -1,30 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const token = sessionStorage.getItem("token");
-
-  if (!token) {
-    window.location.href = "index.html";
-  }
-
-  const userRole = sessionStorage.getItem("role");
-
-  if (userRole !== "1") {
-    window.location.href = "home.html";
-    return;
-  }
-
-  fetchUsers(token);
-  fetchEndpoints(token);
+  fetchUsers();
+  fetchEndpoints();
 });
 
 // Fetch and display users
-function fetchUsers(token) {
+function fetchUsers() {
   const apiUrl = serverEndpoints.getAllUsersData;
 
   fetch(apiUrl, {
     method: "GET",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => response.json())
@@ -41,14 +28,14 @@ function fetchUsers(token) {
 }
 
 // Fetch and display endpoints
-function fetchEndpoints(token) {
+function fetchEndpoints() {
   const endpointUrl = serverEndpoints.getNumberOfRequestsByEndpoint;
 
   fetch(endpointUrl, {
     method: "GET",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => {
@@ -265,13 +252,12 @@ function closeModal(modal) {
 
 // Delete user function
 function deleteUser(userId) {
-  const token = sessionStorage.getItem("token");
 
   fetch(`${serverEndpoints.deleteUser}/${userId}`, {
     method: "DELETE",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => {
@@ -282,7 +268,7 @@ function deleteUser(userId) {
     })
     .then(() => {
       displayPopup("User deleted successfully.", "success");
-      fetchUsers(token); // Refresh the user table
+      fetchUsers(); // Refresh the user table
     })
     .catch((error) => {
       console.error("Error deleting user:", error);
@@ -292,20 +278,19 @@ function deleteUser(userId) {
 
 // Update user role function
 function updateUserRole(userId, newRole) {
-  const token = sessionStorage.getItem("token");
 
   fetch(`${serverEndpoints.updateRole}/${userId}`, {
     method: "PATCH",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ role: newRole }),
   })
     .then((response) => response.json())
     .then(() => {
       displayPopup("Role updated successfully.", "success");
-      fetchUsers(token); // Refresh the user table
+      fetchUsers(); // Refresh the user table
     })
     .catch((error) => {
       console.error("Error updating user role:", error);

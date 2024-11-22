@@ -1,18 +1,34 @@
 /**
  * ChatGPT was used in navbar.js to help ask questions, generate code, and check for logic errors.
- * 
+ *
  * @fileoverview This script dynamically generates a navigation bar based on the user's
  * authentication and role, providing distinct options for logged-out users, regular users,
  * and admins. It also handles user logout functionality.
  **/
 
-const ADMIN = "1";
-const USER = "2";
+const ADMIN = 1;
+const USER = 2;
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Check login state from sessionStorage
-  const isLoggedIn = sessionStorage.getItem("token") !== null;
-  const userRole = sessionStorage.getItem("role");
+document.addEventListener("DOMContentLoaded", async function () {
+  let isLoggedIn = false;
+  let userRole = null;
+  // Make the request to get the number of API calls
+  const response = await fetch("http://localhost:3000/verify", {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (response.status === 200) {
+    const data = await response.json(); // Parse the JSON response
+    isLoggedIn = true;
+    if (data.Role === ADMIN) {
+      userRole = ADMIN;
+    } else {
+      userRole = USER;
+    }
+  }
 
   let navbarHtml;
 
@@ -87,11 +103,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const logoutLink = document.getElementById("logout-link");
     logoutLink.addEventListener("click", function (event) {
       event.preventDefault();
-      // Clear login state and redirect to login page
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("role");
-      sessionStorage.removeItem("email");
-      window.location.href = "index.html";
+      fetch("http://localhost:3000/logout", {
+        method: "POST",
+        credentials: "include", // Include the HttpOnly cookie
+      })
+        .then((response) => {
+          if (response.status === 200) {
+            window.location.href = "index.html"; // Redirect to login or home page
+          }
+        })
+        .catch((err) => console.error("Error:", err));
     });
   }
 });
