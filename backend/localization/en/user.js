@@ -202,6 +202,7 @@ const messages = {
       reset_code_sent: "Reset Code Sent Successfully",
       server_running: "Server is running on port {port}.",
       user_created: "User Created Successfully",
+      logged_in: "Logged in successfully",
     },
     warnings: {
       usage_exceeded:
