@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   let userRole = null;
 
   const response = await fetch(serverEndpoints.verify, {
-    method: "GET",
+    method: httpMethod.get,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -102,12 +102,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     logoutLink.addEventListener("click", function (event) {
       event.preventDefault();
       fetch(serverEndpoints.logout, {
-        method: "POST",
+        method: httpMethod.post,
         credentials: "include", // Include the HttpOnly cookie
       })
         .then((response) => {
           if (response.status === statusCode.httpOk) {
-            window.location.href = "index.html"; // Redirect to login or home page
+            window.location.href = redirectLink.index; // Redirect to login or home page
           }
         })
         .catch((err) => console.error("Error:", err));

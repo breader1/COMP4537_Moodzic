@@ -11,7 +11,7 @@ const MAX_FREE_CALLS = 20;
 document.addEventListener("DOMContentLoaded", async function () {
   
   await fetch(serverEndpoints.verify, {
-    method: "GET",
+    method: httpMethod.get,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   })
   .then((response) => {
     if (response.status !== statusCode.httpOk) {
-      window.location.href = "index.html";
+      window.location.href = redirectLink.index;
     }
   });
 
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   try {
     // Make the request to get the number of API calls
     const response = await fetch(serverEndpoints.getEndpointsCalledByUser, {
-      method: "GET",
+      method: httpMethod.get,
       credentials: "include",
       headers: {
         "Content-Type": "application/json",

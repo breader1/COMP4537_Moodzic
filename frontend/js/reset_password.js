@@ -6,7 +6,19 @@
  * 
  */
 
-document.addEventListener("DOMContentLoaded", function () {  
+document.addEventListener("DOMContentLoaded", async function () { 
+  
+  await fetch(serverEndpoints.verify, {
+    method: httpMethod.get,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then(async (response) => {
+    if (response.status === statusCode.httpOk) {
+      window.location.href = redirectLink.home;
+    }
+  });
 
   const form = document.getElementById("resetPasswordForm");
   const emailInput = form.querySelector('input[name="email"]');
@@ -53,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         // Send request to the backend
         const response = await fetch(serverEndpoints.resetPassword, {
-          method: "POST",
+          method: httpMethod.post,
           headers: {
             "Content-Type": "application/json",
           },
@@ -71,13 +83,13 @@ document.addEventListener("DOMContentLoaded", function () {
           setTimeout(() => {
             form.reset();
             clearValidation(form);
-            window.location.href = "authentication.html"; // Redirect to login page
-          }, 2000);
+            window.location.href = redirectLink.auth; // Redirect to login page
+          }, delayTimes.twoSeconds);
         } else {
           showValidationError(resetCodeInput, result.message);
         }
       } catch (error) {
-        showValidationError(resetCodeInput, userMessages.resetProcessError);
+        showValidationError(resetCodeInput, userMessages.generalError);
       }
     }
   });

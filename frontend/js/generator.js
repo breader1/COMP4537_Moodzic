@@ -10,7 +10,7 @@
 document.addEventListener("DOMContentLoaded", async function () {
 
   await fetch(serverEndpoints.verify, {
-    method: "GET",
+    method: httpMethod.get,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   })
   .then((response) => {
     if (response.status !== statusCode.httpOk) {
-      window.location.href = "index.html";
+      window.location.href = redirectLink.index;
     }
   });
 
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
       const response = await fetch(serverEndpoints.llm, {
-        method: "POST",
+        method: httpMethod.post,
         credentials: "include",
         headers: {
           "Content-Type": "application/json",

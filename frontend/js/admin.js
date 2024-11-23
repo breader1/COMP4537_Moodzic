@@ -7,7 +7,7 @@
 
 document.addEventListener("DOMContentLoaded", async () => {
   await fetch(serverEndpoints.verify, {
-    method: "GET",
+    method: httpMethod.get,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -15,11 +15,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   })
   .then(async (response) => {
     if (response.status !== statusCode.httpOk) {
-      window.location.href = "index.html";
+      window.location.href = redirectLink.index;
     }
     const data = await response.json();
     if (data.Role !== role.admin) {
-      window.location.href = "home.html";
+      window.location.href = redirectLink.home;
     }
   });
 
@@ -32,7 +32,7 @@ function fetchUsers() {
   const apiUrl = serverEndpoints.getAllUsersData;
 
   fetch(apiUrl, {
-    method: "GET",
+    method: httpMethod.get,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -45,8 +45,7 @@ function fetchUsers() {
       }
       displayUserData(data);
     })
-    .catch((error) => {
-      console.error("Error fetching user data:", error);
+    .catch(() => {
       displayPopup(userMessages.userDataFetchError, "error");
     });
 }
@@ -56,7 +55,7 @@ function fetchEndpoints() {
   const endpointUrl = serverEndpoints.getNumberOfRequestsByEndpoint;
 
   fetch(endpointUrl, {
-    method: "GET",
+    method: httpMethod.get,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -74,8 +73,7 @@ function fetchEndpoints() {
       }
       displayUserEndpoint(responseData.data);
     })
-    .catch((error) => {
-      console.error("Error fetching endpoint data:", error);
+    .catch(() => {
       displayPopup(userMessages.userDataFetchError, "error");
     });
 }
@@ -83,7 +81,6 @@ function fetchEndpoints() {
 // Display user data in a table
 function displayUserData(data) {
   if (!Array.isArray(data)) {
-    console.error("Data is not an array:", data);
     displayPopup(userMessages.userDataFetchError, "error");
     return;
   }
@@ -204,8 +201,8 @@ function displayUserEndpoint(data) {
 // Show delete confirmation modal
 function showDeleteConfirmation(userId) {
   showModal(
-    "Are you sure you want to delete this user?",
-    "Delete User",
+    userMessages.deleteMessage,
+    userMessages.deleteOption,
     () => deleteUser(userId)
   );
 }
@@ -213,8 +210,8 @@ function showDeleteConfirmation(userId) {
 // Show update role confirmation modal
 function showUpdateConfirmation(userId, newRole) {
   showModal(
-    `Are you sure you want to update this user's role to ${newRole === "1" ? "Admin" : "User"}?`,
-    "Update Role",
+    userMessages.updateMessage.replace("{newRole}", newRole === "1" ? role.adminString : role.userString),
+    userMessages.updateOption,
     () => updateUserRole(userId, newRole)
   );
 }
@@ -278,7 +275,7 @@ function closeModal(modal) {
 function deleteUser(userId) {
 
   fetch(`${serverEndpoints.deleteUser}/${userId}`, {
-    method: "DELETE",
+    method: httpMethod.delete,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -291,12 +288,11 @@ function deleteUser(userId) {
       return response.json();
     })
     .then(() => {
-      displayPopup("User deleted successfully.", "success");
+      displayPopup(userMessages.deleteSuccess, "success");
       fetchUsers(); // Refresh the user table
     })
-    .catch((error) => {
-      console.error("Error deleting user:", error);
-      displayPopup("An error occurred while deleting the user.", "error");
+    .catch(() => {
+      displayPopup(userMessages.deleteError, "error");
     });
 }
 
@@ -304,7 +300,7 @@ function deleteUser(userId) {
 function updateUserRole(userId, newRole) {
 
   fetch(`${serverEndpoints.updateRole}/${userId}`, {
-    method: "PATCH",
+    method: httpMethod.patch,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -313,11 +309,10 @@ function updateUserRole(userId, newRole) {
   })
     .then((response) => response.json())
     .then(() => {
-      displayPopup("Role updated successfully.", "success");
+      displayPopup(userMessages.updateSuccess, "success");
       fetchUsers(); // Refresh the user table
     })
-    .catch((error) => {
-      console.error("Error updating user role:", error);
-      displayPopup("An error occurred while updating the role.", "error");
+    .catch(() => {
+      displayPopup(userMessages.updateError, "error");
     });
 }
