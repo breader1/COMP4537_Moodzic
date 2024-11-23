@@ -17,7 +17,7 @@ const path = require("path");
 const fs = require("fs");
 const swaggerUiPath = path.join(__dirname, "swagger-ui-dist");
 
-const CORS_ORIGIN_URL = messages.server.cors.allow_origin.dev;
+const CORS_ORIGIN_URL = messages.server.cors.allow_origin.prod;
 const CORS_METHODS = messages.server.cors.allow_methods;
 const CORS_HEADERS = messages.server.cors.allow_headers;
 const CORS_CONTENT_TYPE = messages.server.cors.allow_content_type;
