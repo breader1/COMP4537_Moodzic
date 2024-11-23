@@ -56,8 +56,6 @@ class Server {
         "/getNumberOfRequestsByEndpoint":
           this.getNumberOfRequestsByEndpoint.bind(this),
         "/getEndpointsCalledByUser": this.getEndpointsCalledByUser.bind(this),
-
-        //add endpoint to verify user's cookie and return user's role
         "/verify": this.verifyUser.bind(this),
       },
       PATCH: {
@@ -470,7 +468,7 @@ class Server {
   }
 
   //----------GET-----------
-  //This route is not tracked because it is used for security reasons.
+  //This route is not tracked in DB because it is used for security reasons.
   async verifyUser(req, res) {
     const decoded = this.authenticateToken(req, res);
     let statusCode = 200;
