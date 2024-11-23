@@ -1,235 +1,346 @@
 {
-  "swagger": "2.0",
+  "openapi": "3.0.3",
   "info": {
-    "title": "Moodzic API",
-    "description": "API documentation for Moodzic",
+    "title": "Moodzic - And AI Powered Music Generator",
+    "description": "Moodzic API",
     "version": "1.0.0"
   },
-  "host": "localhost:3000",
-  "basePath": "/",
-  "schemes": ["http"],
-  "securityDefinitions": {
-    "Bearer": {
-      "type": "apiKey",
-      "name": "Authorization",
-      "in": "header",
-      "description": "JWT authorization header using the Bearer scheme."
-    }
-  },
-  "security": [
+  "servers": [
     {
-      "Bearer": []
+      "url":"https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Moodzic",
+      "description": "Generate a song for every mood"
     }
   ],
   "paths": {
     "/register": {
       "post": {
+        "tags": ["Moodzic"],
         "summary": "Register a new user",
-        "description": "Creates a new user account with an email and password.",
-        "consumes": ["application/json"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": { "type": "string" },
-                "password": { "type": "string" }
+        "description": "Registers a new user to the Moodzic platform",
+        "requestBody": {
+          "description": "Adds a new user to the Moodzic platform",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
               }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
-          "201": { "description": "User created successfully." },
-          "400": { "description": "User already exists." },
-          "500": { "description": "Server error." }
+          "201": {
+            "description": "User registered successfully"
+          },
+          "400": {
+            "description": "User already exists"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
     "/login": {
       "post": {
-        "summary": "Login a registered user",
-        "description": "Logs in a user with an email and password. Use the bearer token provided to access the other endpoints.",
-        "consumes": ["application/json"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": { "type": "string" },
-                "password": { "type": "string" }
+        "tags": ["Moodzic"],
+        "summary": "Login as a user",
+        "description": "Allows previously registered users to login to the Moodzic platform",
+        "requestBody": {
+          "description": "Adds a new user to the Moodzic platform",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
               }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
-          "200": { "description": "User logged in successfully." },
-          "400": { "description": "User not found" },
-          "401": { "description": "Invalid credentials" },
-          "500": { "description": "Server error." }
+          "200": {
+            "description": "User logged in successfully"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "tags": ["Moodzic"],
+        "summary": "Logout as a user",
+        "description": "Logout a user from the Moodzic platform by invalidating the session cookie",
+        "responses": {
+          "200": {
+            "description": "User logged out successfully"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
     "/requestPasswordReset": {
       "post": {
+        "tags": ["Moodzic"],
         "summary": "Request a password reset",
-        "description": "Sends an email to the user with a reset code to reset their password.",
-        "consumes": ["application/json"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": { "type": "string" }
+        "description": "Allows users to request a password reset code to be sent to their email",
+        "requestBody": {
+          "description": "Requests a password reset code to be sent to the user's email",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
               }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
-          "200": { "description": "Password reset email sent." },
-          "404": { "description": "User not found" },
-          "500": { "description": "Server error." }
+          "200": {
+            "description": "Password reset code sent successfully"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
     "/resetPassword": {
       "post": {
-        "summary": "Reset a user's password",
-        "description": "Resets a user's password with a reset code and new password. A reset code is required, which is sent to the user's email through a password reset request.",
-        "consumes": ["application/json"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": { "type": "string" },
-                "resetCode": { "type": "string" },
-                "newPassword": { "type": "string" }
+        "tags": ["Moodzic"],
+        "summary": "Reset your password as a user",
+        "description": "Allows users to reset their password using their requested password reset code",
+        "requestBody": {
+          "description": "Resets the user's password using the password reset code",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
               }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
-          "200": { "description": "Password reset successfully." },
-          "400": { "description": "Invalid reset code or code expired" },
-          "500": { "description": "Server error." }
-        }
-      }
-    },
-    "/generate-audio": {
-      "post": {
-        "summary": "Generate audio",
-        "description": "Send a text prompt to generate an audio file. The text prompt should describe the mood and setting of the kind of sound you're looking to generate. Can take up to 60 sec for a response.",
-        "security": [{ "Bearer": [] }],
-        "consumes": ["application/json"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "promptText": { "type": "string" }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Audio Generated Successfully." },
-          "400": { "description": "Invalid format" },
+          "200": {
+            "description": "Password reset code sent successfully"
+          },
+          "404": {
+            "description": "User not found"
+          },
           "500": {
-            "description": "Server error. LLM most likely is not running."
+            "description": "Server error"
           }
         }
       }
     },
     "/getAllUsersData": {
       "get": {
-        "summary": "Get all users data. You must be logged in as an Admin to access this.",
-        "description": "Returns the users id, email, role and total number of requests made for every endpoint combined.",
-        "security": [{ "Bearer": [] }],
+        "tags": ["Moodzic"],
+        "summary": "Gets all users data",
+        "description": "Must be logged in and an Admin. Route to get all users data",
         "responses": {
-          "200": { "description": "Users data returned successfully." },
-          "500": { "description": "Server error." }
+          "200": {
+            "description": "Password reset code sent successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
     "/getNumberOfRequestsByEndpoint": {
       "get": {
-        "summary": "Get number of GET, POST, PATCH, DELETE requests made. You must be logged in as an Admin to access this.",
-        "description": "Returns the number of requests made for each endpoint type, grouped by the HTTP method.",
-        "security": [{ "Bearer": [] }],
+        "tags": ["Moodzic"],
+        "summary": "Get the number of requests by endpoint",
+        "description": "Must be logged in and an Admin. Route to get all requests grouped by endpoints",
         "responses": {
-          "200": { "description": "Data successfully retreived." },
-          "403": { "description": "Forbidden" },
-          "500": { "description": "Server error." }
+          "200": {
+            "description": "Password reset code sent successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
     "/getEndpointsCalledByUser": {
       "get": {
-        "summary": "This returns the logged in users api requests for each endpoint. All logged in users can access this.",
-        "description": "Returns the number of requests made for each endpoint type, grouped by the HTTP method.",
-        "security": [{ "Bearer": [] }],
+        "tags": ["Moodzic"],
+        "summary": "Get endpoints called by user",
+        "description": "Must be logged in. Route to get all requests made by a user grouped by endpoints.",
         "responses": {
-          "200": { "description": "Data successfully retreived." },
-          "401": { "description": "Unauthorized" },
-          "403": { "description": "Forbidden" },
-          "500": { "description": "Server error." }
+          "200": {
+            "description": "User's endpoint data returned successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/verify": {
+      "get": {
+        "tags": ["Moodzic"],
+        "summary": "Checks if a user is logged in",
+        "description": "Checks if a user is logged in by verifying the session cookie. If the user is logged in, returns the user's role_id",
+        "responses": {
+          "200": {
+            "description": "User Authenticated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
     "/updateRole/{id}": {
       "patch": {
-        "summary": "Update user role from user to admin or vice versa. Must be logged in and an admin to access this.",
-        "description": "Updates the role of a user.",
-        "security": [{ "Bearer": [] }],
+        "tags": ["Moodzic"],
+        "summary": "Update a user's role",
+        "description": "Must be logged in and an Admin. Route to update a user's role",
         "parameters": [
           {
             "name": "id",
             "in": "path",
+            "description": "ID of user to update",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "User role updated successfully." },
-          "403": { "description": "Forbidden" },
-          "404": { "description": "User not found" },
-          "500": { "description": "Server error." }
+          "200": {
+            "description": "User role updated successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
     "/delete/{id}": {
       "delete": {
-        "summary": "Delete a user by id. Must be logged in and an admin to access this.",
-        "description": "Deletes a user account.",
-        "security": [{ "Bearer": [] }],
+        "tags": ["Moodzic"],
+        "summary": "Delete a user",
+        "description": "Must be logged in and an Admin. Route to delete a user",
         "parameters": [
           {
             "name": "id",
             "in": "path",
+            "description": "ID of user to delete",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "User deleted successfully." },
-          "403": { "description": "Forbidden" },
-          "404": { "description": "User not found" },
-          "500": { "description": "Server error." }
+          "200": {
+            "description": "User deelted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john@john.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "123"
+          }
+        }
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john@john.com"
+          }
+        }
+      },
+      "ResetPassword": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john@john.com"
+          },
+          "resetCode": {
+            "type": "string",
+            "example": "your-reset-code"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "123456789"
+          }
         }
       }
     }

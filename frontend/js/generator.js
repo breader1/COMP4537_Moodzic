@@ -7,13 +7,20 @@
  *
  **/
 
-document.addEventListener("DOMContentLoaded", function () {
-  const token = sessionStorage.getItem("token");
+document.addEventListener("DOMContentLoaded", async function () {
 
-  // Redirect to index if not logged in
-  if (!token) {
-    window.location.href = "index.html";
-  }
+  await fetch(serverEndpoints.verify, {
+    method: httpMethod.get,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+  .then((response) => {
+    if (response.status !== statusCode.httpOk) {
+      window.location.href = redirectLink.index;
+    }
+  });
 
   const promptForm = document.getElementById("promptForm");
   const promptInput = document.getElementById("promptInput");
@@ -44,10 +51,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     try {
       const response = await fetch(serverEndpoints.llm, {
-        method: "POST",
+        method: httpMethod.post,
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           promptText: promptText,

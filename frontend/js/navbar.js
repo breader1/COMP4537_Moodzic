@@ -1,18 +1,32 @@
 /**
  * ChatGPT was used in navbar.js to help ask questions, generate code, and check for logic errors.
- * 
+ *
  * @fileoverview This script dynamically generates a navigation bar based on the user's
  * authentication and role, providing distinct options for logged-out users, regular users,
  * and admins. It also handles user logout functionality.
  **/
 
-const ADMIN = "1";
-const USER = "2";
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Check login state from sessionStorage
-  const isLoggedIn = sessionStorage.getItem("token") !== null;
-  const userRole = sessionStorage.getItem("role");
+document.addEventListener("DOMContentLoaded", async function () {
+  let isLoggedIn = false;
+  let userRole = null;
+
+  const response = await fetch(serverEndpoints.verify, {
+    method: httpMethod.get,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (response.status === statusCode.httpOk) {
+    const data = await response.json(); // Parse the JSON response
+    isLoggedIn = true;
+    if (data.Role === role.admin) {
+      userRole = role.admin;
+    } else {
+      userRole = role.user;
+    }
+  }
 
   let navbarHtml;
 
@@ -28,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === USER) {
+  } else if (isLoggedIn && userRole === role.user) {
     // Logged in as a regular user
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -51,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     </nav>
     `;
-  } else if (isLoggedIn && userRole === ADMIN) {
+  } else if (isLoggedIn && userRole === role.admin) {
     // Logged in as an admin
     navbarHtml = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -87,11 +101,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const logoutLink = document.getElementById("logout-link");
     logoutLink.addEventListener("click", function (event) {
       event.preventDefault();
-      // Clear login state and redirect to login page
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("role");
-      sessionStorage.removeItem("email");
-      window.location.href = "index.html";
+      fetch(serverEndpoints.logout, {
+        method: httpMethod.post,
+        credentials: "include", // Include the HttpOnly cookie
+      })
+        .then((response) => {
+          if (response.status === statusCode.httpOk) {
+            window.location.href = redirectLink.index; // Redirect to login or home page
+          }
+        })
+        .catch((err) => console.error("Error:", err));
     });
   }
 });

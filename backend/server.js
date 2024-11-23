@@ -12,7 +12,7 @@ const jwt = require("jsonwebtoken");
 const db = require("./database/database");
 const nodemailer = require("nodemailer");
 const messages = require("./localization/en/user.js");
-
+const cookie = require("cookie");
 const path = require("path");
 const fs = require("fs");
 const swaggerUiPath = path.join(__dirname, "swagger-ui-dist");
@@ -21,14 +21,19 @@ const CORS_ORIGIN_URL = messages.server.cors.allow_origin.prod;
 const CORS_METHODS = messages.server.cors.allow_methods;
 const CORS_HEADERS = messages.server.cors.allow_headers;
 const CORS_CONTENT_TYPE = messages.server.cors.allow_content_type;
-const MAX_API_CALLS = 20;
 
 const PORT = process.env.PORT || messages.server.port;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 class Server {
   constructor() {
-    this.server = http.createServer(this.handleRequest.bind(this));
+    this.server = http.createServer((req, res) => {
+      res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN_URL);
+      res.setHeader("Access-Control-Allow-Methods", CORS_METHODS);
+      res.setHeader("Access-Control-Allow-Headers", CORS_HEADERS);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      this.handleRequest(req, res);
+    });
 
     // Routing table
     this.routes = {
@@ -36,11 +41,12 @@ class Server {
         "*": this.handleOptions.bind(this),
       },
       POST: {
-        "/register": this.register.bind(this),
-        "/login": this.login.bind(this),
-        "/requestPasswordReset": this.requestPasswordReset.bind(this),
-        "/resetPassword": this.resetPassword.bind(this),
-        "/generate-audio": this.generateAudio.bind(this),
+        "/register": this.register.bind(this), // works
+        "/login": this.login.bind(this), // works
+        "/requestPasswordReset": this.requestPasswordReset.bind(this), // works
+        "/resetPassword": this.resetPassword.bind(this), //works
+        "/generate-audio": this.generateAudio.bind(this), //works
+        "/logout": this.logout.bind(this),
       },
       GET: {
         "/getAllUsersData": this.getAllUsersData.bind(this),
@@ -50,6 +56,7 @@ class Server {
         "/getNumberOfRequestsByEndpoint":
           this.getNumberOfRequestsByEndpoint.bind(this),
         "/getEndpointsCalledByUser": this.getEndpointsCalledByUser.bind(this),
+        "/verify": this.verifyUser.bind(this),
       },
       PATCH: {
         "/updateRole/:id": this.updateUserRole.bind(this),
@@ -120,12 +127,9 @@ class Server {
 
   //----------OPTIONS-----------
   handleOptions(req, res) {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
-      "Access-Control-Allow-Methods": CORS_METHODS,
-      "Access-Control-Allow-Headers": CORS_HEADERS,
-    });
+    res.writeHead(204);
     res.end();
+    return;
   }
 
   //----------POST-----------
@@ -173,7 +177,7 @@ class Server {
       if (!res.headersSent) {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(
           JSON.stringify({
@@ -255,7 +259,7 @@ class Server {
   }
 
   async login(req, res) {
-    let statusCode = 400;
+    let statusCode = 404;
     let logged_user_id = null;
     try {
       const { email, password } = await this.parseJSONBody(req);
@@ -270,7 +274,6 @@ class Server {
       if (!user) {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(
           JSON.stringify({
@@ -285,7 +288,6 @@ class Server {
         statusCode = 401;
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(
           JSON.stringify({
@@ -302,15 +304,14 @@ class Server {
       );
       statusCode = 200;
       res.writeHead(statusCode, {
+        "Set-Cookie": `token=${token}; HttpOnly;`,
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
-      res.end(JSON.stringify({ token, email: user.email, role: user.role_id }));
+      res.end(JSON.stringify({ message: messages.server.success.logged_in }));
     } catch (error) {
       statusCode = 500;
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
@@ -321,6 +322,15 @@ class Server {
     } finally {
       await this.logRequest(req, logged_user_id, statusCode);
     }
+  }
+
+  async logout(req, res) {
+    let statusCode = 200;
+    res.writeHead(statusCode, {
+      "Set-Cookie": `token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; HttpOnly;`,
+      "Content-Type": CORS_CONTENT_TYPE,
+    });
+    res.end(JSON.stringify({ message: messages.server.success.logged_out }));
   }
 
   async requestPasswordReset(req, res) {
@@ -458,6 +468,21 @@ class Server {
   }
 
   //----------GET-----------
+  //This route is not tracked in DB because it is used for security reasons.
+  async verifyUser(req, res) {
+    const decoded = this.authenticateToken(req, res);
+    let statusCode = 200;
+    if (!decoded) return;
+
+    const user = await db.get(
+      messages.database.queries.select.check_user_exists_by_id,
+      [decoded.user_id]
+    );
+
+    res.writeHead(statusCode, { "Content-Type": CORS_CONTENT_TYPE });
+    res.end(JSON.stringify({ Role: user.role_id }));
+  }
+
   async getAllUsersData(req, res) {
     const decoded = this.authenticateToken(req, res);
     let statusCode = 200;
@@ -471,7 +496,7 @@ class Server {
         statusCode = 403;
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
         return;
@@ -483,14 +508,14 @@ class Server {
 
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify(users));
     } catch (error) {
       statusCode = 500;
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
@@ -521,7 +546,7 @@ class Server {
         statusCode = 403;
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
         return;
@@ -537,14 +562,14 @@ class Server {
       // Send response with the data
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify({ data: results }));
     } catch (error) {
       statusCode = 500;
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
@@ -557,6 +582,7 @@ class Server {
     }
   }
 
+  //this one works
   async getEndpointsCalledByUser(req, res) {
     const decoded = this.authenticateToken(req, res);
     let statusCode = 200;
@@ -598,14 +624,14 @@ class Server {
       // Send response with the formatted data
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify({ data: result }));
     } catch (error) {
       statusCode = 500;
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
@@ -629,7 +655,7 @@ class Server {
       if (!isAdmin) {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
         return;
@@ -644,7 +670,7 @@ class Server {
         statusCode = 404;
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(
           JSON.stringify({ message: messages.server.errors.user_not_found })
@@ -662,7 +688,7 @@ class Server {
       // Send success response with the updated role
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(
         JSON.stringify({
@@ -675,7 +701,7 @@ class Server {
       if (!res.headersSent) {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(
           JSON.stringify({
@@ -700,7 +726,7 @@ class Server {
       if (!isAdmin) {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
         return;
@@ -716,7 +742,7 @@ class Server {
         statusCode = 404;
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(
           JSON.stringify({ message: messages.server.errors.user_not_found })
@@ -739,7 +765,7 @@ class Server {
       // Send success response
       res.writeHead(statusCode, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify({ message: successMessage }));
     } catch (error) {
@@ -747,7 +773,7 @@ class Server {
       if (!res.headersSent) {
         res.writeHead(statusCode, {
           "Content-Type": CORS_CONTENT_TYPE,
-          "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+          // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
         });
         res.end(
           JSON.stringify({
@@ -833,9 +859,6 @@ class Server {
 
   //handle the request
   async handleRequest(req, res) {
-    // Set CORS headers for every request
-    this.setCorsHeaders(res);
-
     // Handle preflight OPTIONS request
     if (req.method === "OPTIONS") {
       this.handleOptions(req, res);
@@ -885,6 +908,7 @@ class Server {
     res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN_URL);
     res.setHeader("Access-Control-Allow-Methods", CORS_METHODS);
     res.setHeader("Access-Control-Allow-Headers", CORS_HEADERS);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
   }
 
   // Helper function to parse JSON body
@@ -913,12 +937,13 @@ class Server {
 
   // Middleware function to authenticate JWT token
   authenticateToken(req, res) {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const cookies = cookie.parse(req.headers.cookie || "");
+    const token = cookies.token;
+    // console.log("Token: ", token); THIS IS SHOWING THE TOKEN!!!!! WOOOO
     if (!token) {
       res.writeHead(401, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify({ message: messages.server.auth.unauthorized }));
       return null;
@@ -929,7 +954,7 @@ class Server {
     } catch (err) {
       res.writeHead(403, {
         "Content-Type": CORS_CONTENT_TYPE,
-        "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+        // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
       });
       res.end(JSON.stringify({ message: messages.server.auth.forbidden }));
       return null;
@@ -953,7 +978,7 @@ class Server {
   notFound(res) {
     res.writeHead(404, {
       "Content-Type": CORS_CONTENT_TYPE,
-      "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
+      // "Access-Control-Allow-Origin": CORS_ORIGIN_URL,
     });
     res.end(
       JSON.stringify({

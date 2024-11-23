@@ -6,6 +6,8 @@
  * requests to the backend. Success or error messages are displayed based on server responses.
  */
 
+const MIN_PSWD_LENGTH = 3;
+
 function showForm(formType) {
   const loginFormContainer = document.getElementById("login-form");
   const registerFormContainer = document.getElementById("register-form");
@@ -22,7 +24,19 @@ function showForm(formType) {
 // Default to show login form on page load
 window.onload = () => showForm("login");
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+  await fetch(serverEndpoints.verify, {
+    method: httpMethod.get,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then(async (response) => {
+    if (response.status === statusCode.httpOk) {
+      window.location.href = redirectLink.home;
+    }
+  });
+  
   // Registration Form Validation
   const registerForm = document.getElementById("registerForm");
   const registerEmailInput = registerForm.querySelector('input[name="email"]');
@@ -46,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Password length validation
-    if (password.length < 3) {
+    if (password.length < MIN_PSWD_LENGTH) {
       showValidationError(registerPasswordInput, userMessages.passwordTooShort);
       isValid = false;
     }
@@ -60,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isValid) {
       // Send registration data to backend
       fetch(serverEndpoints.register, {
-        method: "POST",
+        method: httpMethod.post,
         headers: {
           "Content-Type": "application/json",
         },
@@ -83,8 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
             handleBackendErrors(registerForm, body);
           }
         })
-        .catch((error) => {
-          console.error("Error:", error);
+        .catch(() => {
           showGeneralError(registerForm, userMessages.registrationError);
         });
     }
@@ -121,7 +134,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isValid) {
       // Send login data to backend
       fetch(serverEndpoints.login, {
-        method: "POST",
+        method: httpMethod.post,
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -133,13 +147,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(({ status, body }) => {
           if (status === 200) {
             // Login successful
-            // Store token and user info
-            sessionStorage.setItem("token", body.token);
-            sessionStorage.setItem("email", body.email);
-            sessionStorage.setItem("role", body.role);
-
             // Redirect to home page
-            window.location.href = "home.html";
+            window.location.href = redirectLink.home;
           } else {
             // Login failed, display error message from backend
             if (body.message) {
@@ -159,8 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
         })
-        .catch((error) => {
-          console.error("Error:", error);
+        .catch(() => {
           showGeneralError(loginForm, userMessages.loginError);
         });
     }
@@ -169,7 +177,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Helper function to validate email format
 function isValidEmail(email) {
-  // Simple regex for demonstration purposes
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
@@ -250,6 +257,6 @@ function handleBackendErrors(form, body) {
     // Display general error message
     showGeneralError(form, body.message);
   } else {
-    showGeneralError(form, "An error occurred. Please try again.");
+    showGeneralError(form, userMessages.generalError);
   }
 }

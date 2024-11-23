@@ -1,6 +1,30 @@
+const statusCode = {
+    httpOk: 200,
+}
+
+const delayTimes = {
+  twoSeconds: 2000,
+}
+
+const role = {
+  admin: 1,
+  user: 2,
+  adminString: "Admin",
+  userString: "User",
+}
+
 const httpMethod = {
-    post: 'POST',
-    get: 'GET'
+  get: "GET",
+  post: "POST",
+  delete: "DELETE",
+  patch: "PATCH",
+}
+
+const redirectLink = {
+  home: "home.html",
+  index: "index.html",
+  resetpwd: "reset_password.html",
+  auth: "authentication.html"
 }
 
 const serverEndpoints = {
@@ -18,19 +42,22 @@ const serverEndpoints = {
   updateRole: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/updateRole", // New endpoint
   llm: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/generate-audio",
   deleteUser: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/delete",
+  verify: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/verify",
+  logout: "https://comp4537moodzicbackend-grcvccftg4bzdmcr.canadacentral-01.azurewebsites.net/logout",
 
   // register: "http://localhost:3000/register",
   // login: "http://localhost:3000/login",
   // getAllUsersData: "http://localhost:3000/getAllUsersData",
   // getEndpointsCalledByUser: "http://localhost:3000/getEndpointsCalledByUser",
-  // getNumberOfRequestsByEndpoint:
-  //   "http://localhost:3000/getNumberOfRequestsByEndpoint",
+  // getNumberOfRequestsByEndpoint: "http://localhost:3000/getNumberOfRequestsByEndpoint",
   // incrementUserRequests: "http://localhost:3000/incrementUserRequests",
   // requestPasswordReset: "http://localhost:3000/requestPasswordReset",
   // resetPassword: "http://localhost:3000/resetPassword",
-  // updateRole: "http://localhost:3000/updateRole", // New endpoint
+  // updateRole: "http://localhost:3000/updateRole",
   // llm: "http://localhost:3000/generate-audio",
   // deleteUser: "http://localhost:3000/delete",
+  // verify: "http://localhost:3000/verify",
+  // logout: "http://localhost:3000/logout",
 };
 
 // const llmEndpoint = {
@@ -45,7 +72,7 @@ const serverEndpoints = {
   passwordTooShort: "Password must be at least 3 characters long.",
   passwordMismatch: "Passwords do not match.",
   passwordResetSuccess: "Your password has been reset successfully!",
-  resetProcessError: "An error occurred. Please try again.",
+  generalError: "An error occurred. Please try again.",
   apiCallsInfo: "You have made {number} out of 20 free API calls.",
   apiCallsExceeded: "All free tokens have been used up. Your requests will still be processed.",
   apiCallsNone: "You have made 0 out of 20 free API calls.",
@@ -62,6 +89,14 @@ const serverEndpoints = {
   enterPassword: "Please enter your password.",
   notAuthorized: "You are not authorized to view this page.",
   userDataFetchError: "Error fetching user data. Please try again later.",
+  deleteMessage: "Are you sure you want to delete this user?",
+  deleteOption: "Delete User",
+  deleteSuccess: "User deleted successfully.",
+  deleteError: "An error occurred while deleting the user.",
+  updateMessage: "Are you sure you want to update this user's role to {newRole}?",
+  updateOption: "Update Role",
+  updateSuccess: "Role updated successfully.",
+  updateError: "An error occurred while updating the role.",
 };
 
 

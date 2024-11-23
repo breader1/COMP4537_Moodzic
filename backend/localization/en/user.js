@@ -177,7 +177,7 @@ const messages = {
       allow_methods: "GET, POST, OPTIONS, PATCH, DELETE",
       allow_origin: {
         dev: "http://localhost:8888",
-        prod: "https://mango-wave-08f7a541e.5.azurestaticapps.net/",
+        prod: "https://moodzicfe-gchpdrcya7hpeyhy.canadacentral-01.azurewebsites.net/",
       },
     },
     email: {
@@ -202,6 +202,7 @@ const messages = {
       reset_code_sent: "Reset Code Sent Successfully",
       server_running: "Server is running on port {port}.",
       user_created: "User Created Successfully",
+      logged_in: "Logged in successfully",
     },
     warnings: {
       usage_exceeded:

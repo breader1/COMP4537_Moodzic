@@ -1,30 +1,41 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const token = sessionStorage.getItem("token");
+/**
+ * ChatGPT was used in admin.js to help ask questions, generate code, and check for logic errors.
+ * 
+ * @fileoverview This code checks if a user is logged in by verifying a session token and, if authenticated,
+ * fetches and displays user data in a table on the admin page.
+ */
 
-  if (!token) {
-    window.location.href = "index.html";
-  }
+document.addEventListener("DOMContentLoaded", async () => {
+  await fetch(serverEndpoints.verify, {
+    method: httpMethod.get,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+  .then(async (response) => {
+    if (response.status !== statusCode.httpOk) {
+      window.location.href = redirectLink.index;
+    }
+    const data = await response.json();
+    if (data.Role !== role.admin) {
+      window.location.href = redirectLink.home;
+    }
+  });
 
-  const userRole = sessionStorage.getItem("role");
-
-  if (userRole !== "1") {
-    window.location.href = "home.html";
-    return;
-  }
-
-  fetchUsers(token);
-  fetchEndpoints(token);
+  fetchUsers();
+  fetchEndpoints();
 });
 
 // Fetch and display users
-function fetchUsers(token) {
+function fetchUsers() {
   const apiUrl = serverEndpoints.getAllUsersData;
 
   fetch(apiUrl, {
-    method: "GET",
+    method: httpMethod.get,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => response.json())
@@ -34,21 +45,20 @@ function fetchUsers(token) {
       }
       displayUserData(data);
     })
-    .catch((error) => {
-      console.error("Error fetching user data:", error);
+    .catch(() => {
       displayPopup(userMessages.userDataFetchError, "error");
     });
 }
 
 // Fetch and display endpoints
-function fetchEndpoints(token) {
+function fetchEndpoints() {
   const endpointUrl = serverEndpoints.getNumberOfRequestsByEndpoint;
 
   fetch(endpointUrl, {
-    method: "GET",
+    method: httpMethod.get,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => {
@@ -63,8 +73,7 @@ function fetchEndpoints(token) {
       }
       displayUserEndpoint(responseData.data);
     })
-    .catch((error) => {
-      console.error("Error fetching endpoint data:", error);
+    .catch(() => {
       displayPopup(userMessages.userDataFetchError, "error");
     });
 }
@@ -72,7 +81,6 @@ function fetchEndpoints(token) {
 // Display user data in a table
 function displayUserData(data) {
   if (!Array.isArray(data)) {
-    console.error("Data is not an array:", data);
     displayPopup(userMessages.userDataFetchError, "error");
     return;
   }
@@ -193,8 +201,8 @@ function displayUserEndpoint(data) {
 // Show delete confirmation modal
 function showDeleteConfirmation(userId) {
   showModal(
-    "Are you sure you want to delete this user?",
-    "Delete User",
+    userMessages.deleteMessage,
+    userMessages.deleteOption,
     () => deleteUser(userId)
   );
 }
@@ -202,8 +210,8 @@ function showDeleteConfirmation(userId) {
 // Show update role confirmation modal
 function showUpdateConfirmation(userId, newRole) {
   showModal(
-    `Are you sure you want to update this user's role to ${newRole === "1" ? "Admin" : "User"}?`,
-    "Update Role",
+    userMessages.updateMessage.replace("{newRole}", newRole === "1" ? role.adminString : role.userString),
+    userMessages.updateOption,
     () => updateUserRole(userId, newRole)
   );
 }
@@ -265,13 +273,12 @@ function closeModal(modal) {
 
 // Delete user function
 function deleteUser(userId) {
-  const token = sessionStorage.getItem("token");
 
   fetch(`${serverEndpoints.deleteUser}/${userId}`, {
-    method: "DELETE",
+    method: httpMethod.delete,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   })
     .then((response) => {
@@ -281,34 +288,31 @@ function deleteUser(userId) {
       return response.json();
     })
     .then(() => {
-      displayPopup("User deleted successfully.", "success");
-      fetchUsers(token); // Refresh the user table
+      displayPopup(userMessages.deleteSuccess, "success");
+      fetchUsers(); // Refresh the user table
     })
-    .catch((error) => {
-      console.error("Error deleting user:", error);
-      displayPopup("An error occurred while deleting the user.", "error");
+    .catch(() => {
+      displayPopup(userMessages.deleteError, "error");
     });
 }
 
 // Update user role function
 function updateUserRole(userId, newRole) {
-  const token = sessionStorage.getItem("token");
 
   fetch(`${serverEndpoints.updateRole}/${userId}`, {
-    method: "PATCH",
+    method: httpMethod.patch,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ role: newRole }),
   })
     .then((response) => response.json())
     .then(() => {
-      displayPopup("Role updated successfully.", "success");
-      fetchUsers(token); // Refresh the user table
+      displayPopup(userMessages.updateSuccess, "success");
+      fetchUsers(); // Refresh the user table
     })
-    .catch((error) => {
-      console.error("Error updating user role:", error);
-      displayPopup("An error occurred while updating the role.", "error");
+    .catch(() => {
+      displayPopup(userMessages.updateError, "error");
     });
 }
