@@ -1,6 +1,8 @@
  
 # Moodzic
 
+### Note: This app is deprecated and no longer being hosted.
+
 Moodzic is a web application that leverages AI model called musicgen-small to generate music based on user prompts. Users can request various soundscapes, such as "cafe background noise with water and bird sounds," and the app generates custom audio to match. Each user is allocated 20 free API calls to the AI, after which they are notified of the usage limit. An admin page provides access to all users' API call usage for monitoring and management.
 
 
